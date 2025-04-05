@@ -1,23 +1,20 @@
-import { fetchTasks } from '@/utils/api'
+"use client";
+import { getTasksData } from "@/app/actions/taskActions";
+import { useState, useEffect } from "react";
 
-const getTasksData = async () => {
-  try {
-    const data = await fetchTasks();
+export default function Home() {
+  const [tasks, setTasks] = useState([]);
 
-    return data.map((task) => ({
-      ...task,
-      date: dayjs.utc(task.planned_time).tz("Asia/Kolkata").format(),
-      planned_time: dayjs.utc(task.planned_time).tz("Asia/Kolkata").format(),
-    }));
-  } catch (error) {
-    console.error("Error fetching data from the database:", error);
-    return [];
-  }
-};
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const tasks = await getTasksData();
+      console.log("Tasks:", tasks);
+      setTasks(tasks);
+    };
 
-export default async function Home() {
-  // const tasks = await getTasksData();
-  // console.log(tasks);
+    fetchTasks();
+  }, []);
+
   return (
     <>
     </>

@@ -1,7 +1,7 @@
 "use client";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/utils/api";
+import { login } from "@/app/api/auth/route";
 
 const BACKEND_API = process.env.NEXT_PUBLIC_BACKEND_API;
 
@@ -23,7 +23,6 @@ export default function LoginPage() {
       
       if (response.access_token) {
         localStorage.setItem("token", response.access_token);
-        console.log("Token stored in localStorage");
         router.push("/"); // Redirect to home page
       }
       console.log("Login Response:", response);

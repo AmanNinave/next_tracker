@@ -1,12 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API ;
-
-export const fetchTasks = async () => {
-  const res = await fetch(`${API_URL}/tasks`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch data");
-  }
-  return res.json();
-};
+import { NextResponse } from "next/server";
 
 export const login = async (username, password) => {
     const res = await fetch(`${API_URL}/login`, {
@@ -24,6 +17,11 @@ export const login = async (username, password) => {
   if (!res.ok) {
     throw new Error("Login failed");
   }
+  const response = await res.json();
 
-  return res.json();
+  if (!response.access_token) {
+      throw new Error("No access token received");
+  }
+
+  return response;
 }
