@@ -1,5 +1,5 @@
-import { useDateStore, useEventStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { useDateStore, useEventStore } from "./../../lib/store";
+import { cn } from "./../../lib/utils";
 import dayjs from "dayjs";
 import React from "react";
 import { EventRenderer } from "./event-renderer";

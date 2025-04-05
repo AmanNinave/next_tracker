@@ -1,5 +1,7 @@
 "use client";
-import { getTasksData } from "@/app/actions/taskActions";
+import { getTasksData } from "@/app/actions/task-actions";
+import Header from "@/components/header/Header";
+import MainView from "@/components/main-view";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -16,7 +18,9 @@ export default function Home() {
   }, []);
 
   return (
-    <>
-    </>
+    <div className="">
+      <Header />
+      <MainView tasksData={tasks} />
+    </div>
   );
 }

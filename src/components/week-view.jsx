@@ -1,6 +1,6 @@
-import { getHours, getWeekDays } from "@/lib/getTime";
-import { useDateStore, useEventStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { getHours, getWeekDays } from "./../../lib/getTime";
+import { useDateStore, useEventStore } from "./../../lib/store";
+import { cn } from "./../../lib/utils";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";

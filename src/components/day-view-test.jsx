@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
-import { useDateStore, useEventStore } from '@/lib/store';
+import { useDateStore, useEventStore } from './../../lib/store';
 
 const App = () => {
   const [currentTime, setCurrentTime] = useState(dayjs());

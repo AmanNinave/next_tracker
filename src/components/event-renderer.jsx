@@ -1,4 +1,4 @@
-import { useEventStore } from "@/lib/store";
+import { useEventStore } from "./../../lib/store";
 import dayjs from "dayjs";
 import React from "react";
 

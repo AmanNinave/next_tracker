@@ -1,6 +1,6 @@
-import { getWeeks } from "@/lib/getTime";
-import { useDateStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { getWeeks } from "./../../../lib/getTime";
+import { useDateStore } from "./../../../lib/store";
+import { cn } from "./../../../lib/utils";
 import dayjs from "dayjs";
 import React, { Fragment } from "react";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";

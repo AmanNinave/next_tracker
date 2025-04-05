@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import { cn } from "@/lib/utils";
+import { cn } from "./../../../lib/utils";
 
 const myCalendars = [
   { id: "cal1", title: "Work", color: "accent-red-600" },

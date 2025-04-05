@@ -7,11 +7,11 @@ import {
   HiOutlineMenuAlt4,
 } from "react-icons/hi";
 import { IoCloseSharp } from "react-icons/io5";
-import AddTime from "../add-time";
-import { createEvent } from "@/app/actions/event-actions";
-import { cn } from "@/lib/utils";
+import AddTime from "./add-time";
+import { createEvent } from "@/app/actions/task-actions";
+import { cn } from "./../../lib/utils";
 import { Textarea } from "./ui/textarea";
-import { categories, Task, subcategories, statuses } from "@/utils/constants";
+import { categories, subcategories, statuses } from "./../utils/constants";
 
 export default function EventPopover({ isOpen, onClose, date }) {
   const popoverRef = useRef(null);

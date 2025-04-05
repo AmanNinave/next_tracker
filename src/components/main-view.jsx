@@ -4,7 +4,7 @@ import {
   useDateStore,
   useEventStore,
   useViewStore,
-} from '@/lib/store';
+} from "../../lib/store";
 
 import MonthView from './month-view';
 import SideBar from './sidebar/SideBar';
@@ -16,7 +16,7 @@ import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import DayView from './day-view-test';
 
-export default function MainView({ eventsData }) {
+export default function MainView({ tasksData }) {
   const { selectedView } = useViewStore();
 
   const {
@@ -31,7 +31,7 @@ export default function MainView({ eventsData }) {
   const { userSelectedDate } = useDateStore();
 
   useEffect(() => {
-    const mappedEvents = eventsData.map((event) => ({
+    const mappedEvents = tasksData.map((event) => ({
       id: event.id,
       type: event.type,
       plannedStartTime: dayjs(event.plannedStartTime),
@@ -59,7 +59,7 @@ export default function MainView({ eventsData }) {
 
     console.log('Mapped events:', mappedEvents);
     setEvents(mappedEvents);
-  }, [eventsData, setEvents]);
+  }, [tasksData, setEvents]);
 
   return (
     <div className="flex">

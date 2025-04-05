@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { IoCloseSharp } from "react-icons/io5";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteEvent, updateEventField } from "@/app/actions/event-actions";
-import AddTime from "../add-time";
+import { deleteEvent, updateEventField } from "@/app/actions/task-actions";
+import AddTime from "./add-time";
 import { categories, subcategories, breakCategories, statuses } from "@/utils/constants";
 import { FiClock } from "react-icons/fi";
 

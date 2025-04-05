@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils";
+import { cn } from "./../../../lib/utils";
 import React from "react";
 import Create from "./create";
 import SideBarCalendar from "./side-bar-calendar";
 import SearchUsers from "./search-users";
 import MyCalendars from "./my-calendars";
-import { useToggleSideBarStore } from "@/lib/store";
+import { useToggleSideBarStore } from "./../../../lib/store";
 
 export default function SideBar() {
   const { isSideBarOpen } = useToggleSideBarStore();
