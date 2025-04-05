@@ -38,19 +38,19 @@ const App = () => {
 
   const renderEvents = () => {
     const filteredEvents = events.filter(event => {
-      const eventDate = dayjs(event.plannedStartTime).format('DD-MM-YY');
+      const eventDate = dayjs(event.start_time).format('DD-MM-YY');
       return eventDate === userSelectedDate.format('DD-MM-YY');
     });
 
     return filteredEvents.map((event, index) => {
-      const start = dayjs(event.plannedStartTime);
-      const end = dayjs(event.plannedEndTime);
+      const start = dayjs(event.start_time);
+      const end = dayjs(event.start_time)
       const duration = end.diff(start, 'minute');
       const top = start.hour() * 60 + start.minute();
 
       const overlappingEvents = events.filter(e => {
-        const eStart = dayjs(e.plannedStartTime);
-        const eEnd = dayjs(e.plannedEndTime);
+        const eStart = dayjs(e.start_time);
+        const eEnd = dayjs(e.end_time);
         return (
           eStart.isBefore(end) &&
           eEnd.isAfter(start) &&

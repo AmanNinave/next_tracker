@@ -33,5 +33,5 @@ export const breakCategories = [
 "Unplanned", // Unscheduled or spontaneous breaks.
 ];
 
-export const statuses = ["Pending", "In Progress", "Completed"];
+export const statuses = ["pending", "inprogress", "completed"];
   

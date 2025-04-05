@@ -31,34 +31,7 @@ export default function MainView({ tasksData }) {
   const { userSelectedDate } = useDateStore();
 
   useEffect(() => {
-    const mappedEvents = tasksData.map((event) => ({
-      id: event.id,
-      type: event.type,
-      plannedStartTime: dayjs(event.plannedStartTime),
-      plannedEndTime: dayjs(event.plannedEndTime),
-      actualStartTime: event.actualStartTime ? dayjs(event.actualStartTime) : null,
-      actualEndTime: event.actualEndTime ? dayjs(event.actualEndTime) : null,
-      category: event.category,
-      subCategory: event.subCategory,
-      status: event.status,
-      title: event.title,
-      description: event.description,
-      remark: event.remark || null,
-      rating: event.rating || null,
-      breaks: event.breaks || [],
-      subTasks: event.subTasks?.map((subTask) => ({
-        id: subTask.id,
-        title: subTask.title,
-        status: subTask.status,
-        description: subTask.description,
-      })) || [],
-      createdAt: dayjs(event.createdAt),
-      updatedAt: dayjs(event.updatedAt),
-      date: dayjs(event.plannedStartTime),
-    }));
-
-    console.log('Mapped events:', mappedEvents);
-    setEvents(mappedEvents);
+    setEvents(tasksData);
   }, [tasksData, setEvents]);
 
   return (

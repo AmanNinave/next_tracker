@@ -1,15 +1,17 @@
+"use client"
+
 import { useEventStore } from "./../../lib/store";
 import dayjs from "dayjs";
 import React from "react";
 
 export function EventRenderer({ date, view, events }) {
   const { openEventSummary } = useEventStore();
-
+  console.log(events);
   const filteredEvents = events.filter((event) => {
     if (view === "month") {
       return event.date.format("DD-MM-YY") === date.format("DD-MM-YY");
     } else if (view === "week" || view === "day") {
-      return event.date.format("DD-MM-YY HH") === date.format("DD-MM-YY HH");
+      return dayjs(event.date).format("DD-MM-YY HH") === date.format("DD-MM-YY HH");
     }
     return false;
   });
