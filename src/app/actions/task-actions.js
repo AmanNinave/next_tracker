@@ -3,15 +3,15 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
-import { createNewTask, fetchTasks } from '@/app/api/tasks/route';
+import { createNewTask, fetchTaskSchedules } from '@/app/api/tasks/route';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 
-export const getTasksData = async () => {
+export const getTaskSchedulesData = async () => {
   try {
-    const data = await fetchTasks();
+    const data = await fetchTaskSchedules();
 
     return data.map((task) => ({
       ...task,
