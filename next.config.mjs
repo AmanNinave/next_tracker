@@ -1,4 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+import pkg from 'next';
+const { NextConfig } = pkg;
 
-export default nextConfig;
+const nextConfig = {
+    experimental: {
+      reactCompiler: true,
+    },
+  }
+   
+export default nextConfig
+  
