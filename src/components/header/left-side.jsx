@@ -8,7 +8,7 @@ import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { useDateStore, useToggleSideBarStore, useViewStore } from "./../../../lib/store";
 import dayjs from "dayjs";
 
-export default function HeaderLeft() {
+export default function HeaderLeft(tasksData) {
   const todaysDate = dayjs();
   const { userSelectedDate, setDate, setMonth, selectedMonthIndex } =
     useDateStore();

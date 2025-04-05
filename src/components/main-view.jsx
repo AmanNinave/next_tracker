@@ -16,7 +16,7 @@ import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import DayView from './day-view-test';
 
-export default function MainView({ tasksData }) {
+export default function MainView({ tasksData , taskSchedulesData }) {
   const { selectedView } = useViewStore();
 
   const {
@@ -31,13 +31,13 @@ export default function MainView({ tasksData }) {
   const { userSelectedDate } = useDateStore();
 
   useEffect(() => {
-    setEvents(tasksData);
+    setEvents(taskSchedulesData);
   }, [tasksData, setEvents]);
 
   return (
     <div className="flex">
       {/* SideBar */}
-      <SideBar />
+      <SideBar tasksData={tasksData}/>
 
       <div className="w-full flex-1">
         {selectedView === 'month' && <MonthView />}

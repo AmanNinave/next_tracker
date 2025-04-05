@@ -5,8 +5,9 @@ import SideBarCalendar from "./side-bar-calendar";
 import SearchUsers from "./search-users";
 import MyCalendars from "./my-calendars";
 import { useToggleSideBarStore } from "./../../../lib/store";
+import TaskList from "./task-list";
 
-export default function SideBar() {
+export default function SideBar({tasksData}) {
   const { isSideBarOpen } = useToggleSideBarStore();
 
   return (
@@ -20,6 +21,7 @@ export default function SideBar() {
       <SideBarCalendar />
       <SearchUsers />
       <MyCalendars />
+      <TaskList tasks={tasksData} />
     </aside>
   );
 }

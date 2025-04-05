@@ -3,11 +3,20 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
-import { createNewTask, fetchTaskSchedules } from '@/app/api/tasks/route';
+import { createNewTask, fetchTasks, fetchTaskSchedules } from '@/app/api/tasks/route';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+export const getTasks = async () => {
+  try {
+    return await fetchTasks();
+    
+  } catch (error) {
+    console.error("Error fetching data from the database:", error);
+    return
+  }
+}
 
 export const getTaskSchedulesData = async () => {
   try {
