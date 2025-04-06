@@ -112,35 +112,6 @@ export function EventSummaryPopover({ isOpen, onClose, event }) {
     });
   };
 
-  const breakData = useMemo(() => {
-    if (event.breaks.length > 0) {
-      const lastBreakData = event.breaks[event.breaks.length - 1];
-      if (lastBreakData.endTime == null && lastBreakData.startTime !== null) {
-        return { ...lastBreakData, state: "Resume" };
-      } else {
-        return { remark: '', category: breakCategories[0], startTime: null, endTime: null, state: "Pause" };
-      }
-    } else {
-      return { remark: '', category: breakCategories[0], startTime: null, endTime: null, state: "Pause" };
-    }
-  }, [event.breaks]);
-
-  const handleAddBreakSave = () => {
-    let breaksData = [...event.breaks];
-    if (breakData.state === 'Pause') {
-      breaksData = [...breaksData, { startTime: new Date(), endTime: null, remark: breaksObj.remark, category: breaksObj.category }];
-    } else if (breakData.state === 'Resume') {
-      breaksData[breaksData.length - 1].endTime = new Date();
-      breaksData[breaksData.length - 1].remark = breaksObj.remark;
-      breaksData[breaksData.length - 1].category = breaksObj.category;
-    }
-    handleSave({ breaks: breaksData });
-  };
-
-  const handlePauseAndResumeBreak = (breakData) => {
-    setBreaksObj({ ...breakData });
-    setIsBreakBoxActive(true);
-  };
 
   if (!isOpen) return null;
 
@@ -154,9 +125,8 @@ export function EventSummaryPopover({ isOpen, onClose, event }) {
         <div className="mb-2 flex items-center justify-between rounded-md bg-slate-100 p-1">
           <div className="flex items-center space-x-3 text-sm">
             <FiClock className="size-5 text-gray-600 ml-1" />
-            <p>{dayjs(editableEvent.plannedStartTime).format("dddd, MMMM D YYYY")}</p>
+            <p>{dayjs(editableEvent.start_time).format("dddd, MMMM D YYYY")}</p>
           </div>
-          <p><strong>{editableEvent.type}</strong></p>
           <Button variant="ghost" size="icon" type="button" onClick={onClose}>
             <IoCloseSharp className="h-4 w-4" />
           </Button>

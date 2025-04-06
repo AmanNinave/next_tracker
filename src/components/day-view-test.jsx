@@ -42,10 +42,9 @@ const App = () => {
       const eventDate = dayjs(event.start_time).format('DD-MM-YY');
       return eventDate === userSelectedDate.format('DD-MM-YY');
     });
-
     return filteredEvents.map((event, index) => {
       const start = dayjs(event.start_time);
-      const end = dayjs(event.start_time)
+      const end = dayjs(event.end_time)
       const duration = end.diff(start, 'minute');
       const top = start.hour() * 60 + start.minute();
 
@@ -82,7 +81,7 @@ const App = () => {
             openEventSummary(event);
           }}
         >
-          <strong>{event.title}</strong>
+          <strong>{event.task.title}</strong>
           <br />
           <span className="text-gray-200 text-xs">
             {start.format('h:mm A')} - {end.format('h:mm A')}

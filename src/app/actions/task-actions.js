@@ -26,6 +26,7 @@ export const getTaskSchedulesData = async () => {
       ...task,
       date: dayjs.utc(task.start_time).tz("Asia/Kolkata").format(),
       start_time: dayjs.utc(task.start_time).tz("Asia/Kolkata").format(),
+      end_time: dayjs.utc(task.end_time).tz("Asia/Kolkata").format(),
     }));
   } catch (error) {
     console.error("Error fetching data from the database:", error);
