@@ -55,3 +55,22 @@ export const createNewTask = async (payload) => {
     }
     return res.json();
 }
+
+export const createNewScheduleEntry = async (payload) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        throw new Error("No token found");
+    }
+    const res = await fetch(`${API_URL}/task-schedule`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body : JSON.stringify(payload),
+    });
+    if (!res.ok) {
+        throw new Error("Failed to create data");
+    }
+    return res.json();
+}

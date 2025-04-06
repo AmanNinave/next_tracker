@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
-import { createNewTask, fetchTasks, fetchTaskSchedules } from '@/app/api/tasks/route';
+import { createNewScheduleEntry, createNewTask, fetchTasks, fetchTaskSchedules } from '@/app/api/tasks/route';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -58,3 +58,4 @@ export const createTask = async (formData) => {
     return [];
   }
 }
+

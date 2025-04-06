@@ -26,28 +26,32 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from '../../../lib/utils'
 import { TimePicker } from './time-picker'
 import { format } from 'date-fns'
+import { createNewScheduleEntry } from '@/app/api/tasks/route'
   
 
 const formSchema = z.object({
-  startTime: z.date(),
-  endTime: z.date(),
-}).refine((data) => data.endTime > data.startTime, {
+  start_time: z.date(),
+  end_time: z.date(),
+  remarks: z.string().optional(),
+}).refine((data) => data.end_time > data.start_time, {
   message: "End time must be after start time",
-  path: ["endTime"],
+  path: ["end_time"],
 });
 
-const DateTimePickerForm = ({setIsScheduleEnabled}) => {
+const DateTimePickerForm = ({setIsScheduleEnabled, taskId}) => {
   
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      startTime: undefined,
-      endTime: undefined,
+      start_time: undefined,
+      end_time: undefined,
+      remarks: "",
     },
   })
  
   function onSubmit(values) {
-    console.log(values)
+    createNewScheduleEntry({...values , task_id : taskId });
+    setIsScheduleEnabled(false)
   }
 
   return (
@@ -55,7 +59,7 @@ const DateTimePickerForm = ({setIsScheduleEnabled}) => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="startTime"
+          name="start_time"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Start time</FormLabel>
@@ -91,7 +95,7 @@ const DateTimePickerForm = ({setIsScheduleEnabled}) => {
         />
         <FormField
           control={form.control}
-          name="endTime"
+          name="end_time"
           render={({ field }) => (
             <FormItem>
               <FormLabel>End time</FormLabel>
@@ -122,6 +126,22 @@ const DateTimePickerForm = ({setIsScheduleEnabled}) => {
                 </PopoverContent>
               </Popover>
 
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="remarks"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Remarks</FormLabel>
+              <FormControl>
+                <textarea
+                  {...field}
+                  className="w-full border p-2 rounded"
+                  placeholder="Enter remarks here..."
+                />
+              </FormControl>
             </FormItem>
           )}
         />

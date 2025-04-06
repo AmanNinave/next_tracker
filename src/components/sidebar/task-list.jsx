@@ -72,7 +72,7 @@ const TaskList = ({ tasks }) => {
                       {"Schedule Task"}
                     </Button>
                     :
-                    <DateTimePickerForm setIsScheduleEnabled={setIsScheduleEnabled} />
+                    <DateTimePickerForm taskId={selectedTask.id} setIsScheduleEnabled={setIsScheduleEnabled} />
                   }
                 </div>
 
