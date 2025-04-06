@@ -3,9 +3,11 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import DateTimePickerForm from "../time-picker/date-time-picker-form";
 
 const TaskList = ({ tasks }) => {
   const [selectedTask, setSelectedTask] = useState(null);
+  const [isScheduleEnabled, setIsScheduleEnabled] = useState(false)
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
@@ -17,7 +19,7 @@ const TaskList = ({ tasks }) => {
 
   return (
     <div className="border rounded p-1 shadow bg-white">
-      <h2 className="text-lg font-semibold mb-4">Tasks List</h2>
+      <h2 className="text-lg font-semibold">Tasks List</h2>
       <div className="space-y-4 h-80 overflow-y-auto">
         {tasks.map((task) => (
           <div
@@ -63,10 +65,17 @@ const TaskList = ({ tasks }) => {
                     </div>
                   ))}
                 </div>
+                
+                <div className="space-y-6">
+                  {!isScheduleEnabled ?
+                    <Button onClick={() => setIsScheduleEnabled(true)}>
+                      {"Schedule Task"}
+                    </Button>
+                    :
+                    <DateTimePickerForm setIsScheduleEnabled={setIsScheduleEnabled} />
+                  }
+                </div>
 
-                <Button className="mt-4 w-full" onClick={closeDialog}>
-                  Close
-                </Button>
               </>
             )}
           </DialogContent>
