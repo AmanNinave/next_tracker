@@ -19,8 +19,8 @@ export default function SideBar({tasksData}) {
     >
       <Create />
       <SideBarCalendar />
-      <SearchUsers />
-      <MyCalendars />
+      {/* <SearchUsers />
+      <MyCalendars /> */}
       <TaskList tasks={tasksData} />
     </aside>
   );
