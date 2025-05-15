@@ -57,7 +57,7 @@ export default function MainView({ tasksData , taskSchedulesData }) {
         <EventSummaryPopover
           isOpen={isEventSummaryOpen}
           onClose={closeEventSummary}
-          event={selectedEvent}
+          task={selectedEvent}
         />
       )}
     </div>
