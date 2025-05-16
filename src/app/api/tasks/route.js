@@ -1,113 +1,93 @@
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API ;
+'use client';
 
-export const fetchTasks= async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        throw new Error("No token found");
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_API;
+
+// Helper function to get token (works in both client & server contexts)
+const getToken = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem("token");
     }
-    const res = await fetch(`${API_URL}/task`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-    });
+    return null;
+  } catch (error) {
+    return null;
+  }
+};
+
+// Centralized API call handler with improved error handling
+async function apiCall(url, method = "GET", body = null) {
+  const token = getToken();
+  
+  if (!token) {
+    const error = new Error("No token found");
+    error.status = 401;
+    error.redirect = true;
+    throw error;
+  }
+  
+  try {
+    const options = {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    };
+    
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+    
+    const res = await fetch(url, options);
+    
+    if (res.status === 401) {
+      const error = new Error("Authentication expired or invalid");
+      error.status = 401;
+      error.redirect = true;
+      throw error;
+    }
+    
     if (!res.ok) {
-        throw new Error("Failed to fetch data");
+      const errorData = await res.json().catch(() => ({}));
+      const error = new Error(errorData.detail || `Request failed with status ${res.status}`);
+      error.status = res.status;
+      error.data = errorData;
+      throw error;
     }
+    
     return res.json();
+  } catch (error) {
+    // Rethrow with enhanced information if it's not already a structured error
+    if (!error.status) {
+      const enhancedError = new Error(`Network error: ${error.message}`);
+      enhancedError.originalError = error;
+      throw enhancedError;
+    }
+    throw error;
+  }
 }
+
+// API functions using the centralized handler
+export const fetchTasks = async () => {
+  return apiCall(`${API_URL}/task`);
+};
 
 export const fetchTaskSchedules = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const res = await fetch(`${API_URL}/task-schedule`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-    });
-    if (!res.ok) {
-        throw new Error("Failed to fetch data");
-    }
-    return res.json();
-}
-
+  return apiCall(`${API_URL}/task-schedule`);
+};
 
 export const createNewTask = async (payload) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const res = await fetch(`${API_URL}/task`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-        body : JSON.stringify(payload),
-    });
-    if (!res.ok) {
-        throw new Error("Failed to create data");
-    }
-    return res.json();
-}
+  return apiCall(`${API_URL}/task`, "POST", payload);
+};
 
 export const createNewScheduleEntry = async (payload) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const res = await fetch(`${API_URL}/task-schedule`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-        body : JSON.stringify(payload),
-    });
-    if (!res.ok) {
-        throw new Error("Failed to create data");
-    }
-    return res.json();
-}
+  return apiCall(`${API_URL}/task-schedule`, "POST", payload);
+};
 
 export const createNewLogEntry = async (payload) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const res = await fetch(`${API_URL}/task-log`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-        body : JSON.stringify(payload),
-    });
-    if (!res.ok) {
-        throw new Error("Failed to create data");
-    }
-    return res.json();
-}
-export const updateLogEntry = async (id , payload) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const res = await fetch(`${API_URL}/task-log/${id}`, {
-        method: "PUT",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-        body : JSON.stringify(payload),
-    });
-    if (!res.ok) {
-        throw new Error("Failed to create data");
-    }
-    return res.json();
-}
+  return apiCall(`${API_URL}/task-log`, "POST", payload);
+};
+
+export const updateLogEntry = async (id, payload) => {
+  return apiCall(`${API_URL}/task-log/${id}`, "PUT", payload);
+};

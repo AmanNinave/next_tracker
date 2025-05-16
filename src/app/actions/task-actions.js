@@ -2,6 +2,7 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { redirect } from "next/navigation";
 
 import { createNewScheduleEntry, createNewTask, fetchTasks, fetchTaskSchedules } from '@/app/api/tasks/route';
 
@@ -11,9 +12,11 @@ dayjs.extend(timezone);
 export const getTasks = async () => {
   try {
     return await fetchTasks();
-    
   } catch (error) {
     console.error("Error fetching data from the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
     return
   }
 }
@@ -30,6 +33,9 @@ export const getTaskSchedulesData = async () => {
     }));
   } catch (error) {
     console.error("Error fetching data from the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
     return
   }
 }
@@ -56,6 +62,9 @@ export const createTask = async (formData) => {
 
   } catch (error) {
     console.error("Error creating task in the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
     return [];
   }
 }
