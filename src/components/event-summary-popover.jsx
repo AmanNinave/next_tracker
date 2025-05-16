@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {  } from "@/app/actions/task-actions";
 import AddTime from "./add-time";
-import { categories, subcategories, breakCategories, statuses } from "@/utils/constants";
 import { FiClock } from "react-icons/fi";
 import { createNewLogEntry, updateLogEntry } from "@/app/api/tasks/route";
 

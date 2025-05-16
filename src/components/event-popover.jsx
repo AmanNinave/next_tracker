@@ -10,7 +10,7 @@ import { IoCloseSharp } from "react-icons/io5";
 import { createTask } from "@/app/actions/task-actions";
 import { cn } from "./../../lib/utils";
 import { Textarea } from "./ui/textarea";
-import { categories, subcategories, statuses } from "./../utils/constants";
+import { categories, subcategories, statuses, categories_and_subcategories } from "./../utils/constants";
 
 export default function EventPopover({ isOpen, onClose, date }) {
   const popoverRef = useRef(null);
@@ -113,7 +113,7 @@ export default function EventPopover({ isOpen, onClose, date }) {
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 h-7"
               >
                 <option value="" disabled>Select a category</option>
-                {categories.map((cat) => (
+                {Object.keys(categories_and_subcategories).map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -126,9 +126,10 @@ export default function EventPopover({ isOpen, onClose, date }) {
                 value={subcategory}
                 onChange={(e) => setSubcategory(e.target.value)}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 h-7"
+                disabled={!category} // Disable if no category is selected
               >
                 <option value="" disabled>Select a subcategory</option>
-                {subcategories.map((sub) => (
+                {category && categories_and_subcategories[category]?.map((sub) => (
                   <option key={sub} value={sub}>{sub}</option>
                 ))}
               </select>
@@ -148,21 +149,19 @@ export default function EventPopover({ isOpen, onClose, date }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <div className="flex items-center space-x-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              name="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 h-7"
+            >
               {statuses.map((s) => (
-                <label key={s} className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="status"
-                    value={s.toLowerCase()}
-                    checked={status === s.toLowerCase()}
-                    onChange={() => setStatus(s.toLowerCase())}
-                  />
-                  <span>{s}</span>
-                </label>
+                <option key={s} value={s.toLowerCase()}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           <div className="flex justify-end space-x-2">
