@@ -1,5 +1,5 @@
 
-export const statuses = ["pending", "inprogress", "completed", "scheduled", "cancelled"];
+export const statuses = ["pending", "inprogress", "completed", "scheduled", "cancelled", "recurring", "missed"];
   
 export const categories_and_subcategories = {
     Routine: [

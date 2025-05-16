@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { startTransition, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import DateTimePickerForm from "../time-picker/date-time-picker-form";
@@ -11,6 +11,8 @@ import { updateTask } from "@/app/actions/task-actions";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { createNewLogEntry, updateLogEntry } from "@/app/api/tasks/route";
+
 
 
 // Configure dayjs
@@ -35,7 +37,10 @@ const TaskList = ({ tasks }) => {
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(statuses[1]);
   const [currentCategory, setCurrentCategory] = useState("all");
-
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [isPending, setIsPending] = useState(false);
+  
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -114,6 +119,60 @@ const TaskList = ({ tasks }) => {
     );
   };
 
+  // log related functions
+  const handleSaveLog = (shouldStart , task_schedule_id, task_id, logDetails) => {
+    setError(null);
+    setSuccess(null);
+    setIsPending(true);
+    startTransition(async () => {
+      try {
+        let result;
+        if (shouldStart) {
+          result = await createNewLogEntry({
+            task_schedule_id: task_schedule_id,
+            task_id: task_id,
+            start_time: new Date(),
+            end_time: null,
+            remarks: '',
+          });
+        }else {
+          let lastLogData = logDetails;
+          if (lastLogData.end_time) {
+            setError("You have already ended this task.");
+            return;
+          }
+          if (!lastLogData.start_time) {
+            setError("You have not started this task yet.");
+            return;
+          }
+          if (lastLogData.start_time > new Date()) {
+            setError("You cannot end a task that has not started yet.");
+            return;
+          }
+          if (lastLogData.start_time > lastLogData.end_time) {
+            setError("End time cannot be before start time.");
+            return;
+          }
+          result = await updateLogEntry(lastLogData.id ,{
+            start_time: lastLogData.start_time,
+            end_time: new Date(),
+            remarks: lastLogData.remarks,
+          });
+        }
+        
+        setIsPending(false);
+        if ("error" in result) {
+          setError(result.error);
+        } else if (result.success) {
+          setSuccess(result.success);
+          onClose();
+        }
+      } catch {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    });
+  };
+  console.log(selectedTask)
   return (
     <div className="w-full">
       <div className="p-2 pt-0 border-b border-gray-100">
@@ -151,7 +210,7 @@ const TaskList = ({ tasks }) => {
         </div>
       </div>
       
-      <div className="pt-3 pb-3 space-y-3 h-80 overflow-y-auto">
+      <div className="pt-3 pb-3 space-y-3 h-146 overflow-y-auto">
         {tasks.length > 0 ? (
           (() => {
             const filteredTasks = tasks.filter(task => 
@@ -160,7 +219,12 @@ const TaskList = ({ tasks }) => {
             );
             
             return filteredTasks.length > 0 ? (
-              filteredTasks.map((task) => (
+              filteredTasks.map((task) => {
+                const canLog = task.status == statuses[5] && task.task_schedules?.length > 0 && dayjs(task.task_schedules?.[0]?.end_time).isAfter(dayjs());
+                const scheduleId = task.task_schedules?.[0]?.id;
+                const lastLog = task.task_schedules?.[0]?.task_logs?.[task.task_schedules?.[0]?.task_logs.length - 1] ;
+                const shouldShowStartButton = !lastLog || lastLog.end_time;
+                return (
                 <div
                   key={task.id}
                   onClick={() => handleTaskClick(task)}
@@ -169,9 +233,24 @@ const TaskList = ({ tasks }) => {
                   {/* Task content - keep all your existing task card content here */}
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-gray-900">{task.title}</h3>
-                    <Badge className={`text-xs px-2 py-1 rounded-full ${getStatusColor(task.status)}`}>
-                      {task.status || currentStatus}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      {canLog && (
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSaveLog(shouldShowStartButton, scheduleId, task.id, lastLog);
+                          }}
+                          className="text-xs h-7 px-3 flex items-center"
+                          disabled={isPending}
+                        >
+                          {shouldShowStartButton ? "Start" : "End"}
+                        </Button>
+                      )}
+                      <Badge className={`text-xs px-2 py-1 rounded-full ${getStatusColor(task.status)}`}>
+                        {task.status || currentStatus}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex items-center text-sm text-gray-500 space-x-2">
                     <span>{task.category}</span>
@@ -183,15 +262,23 @@ const TaskList = ({ tasks }) => {
                     )}
                   </div>
                   {task.task_schedules?.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-center">
-                      <Clock className="h-3.5 w-3.5 mr-1" />
-                      <span>
-                        Next: {formatDateTime(task.task_schedules[0].start_time)}
-                      </span>
+                    <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-center justify-around">
+                      <div className="flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        <span>
+                          Start: {formatDateTime(task.task_schedules[0].start_time)}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        <span>
+                          End: {formatDateTime(task.task_schedules[0].end_time)}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
-              ))
+              )})
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                 <Clipboard className="h-12 w-12 mb-2 opacity-20" />
@@ -329,10 +416,11 @@ const TaskList = ({ tasks }) => {
                 <DateTimePickerForm 
                   setIsScheduleEnabled={setIsScheduleEnabled}
                   taskId={selectedTask.id} 
+                  selectedTask={selectedTask}
                 />
               )}
 
-              {!isScheduleEnabled && selectedTask.task_schedules?.length > 0 && (
+              { !isEditing && !isScheduleEnabled && selectedTask.task_schedules?.length > 0 && (
                 <div className="border-t pt-3">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                     <Calendar className="h-4 w-4 mr-1 text-gray-500" />
@@ -415,14 +503,17 @@ const TaskList = ({ tasks }) => {
                   </Button>
                 }
                 {!isScheduleEnabled && (
-                  <Button 
-                    size="sm" 
-                    onClick={() => {setIsEditing(false); setIsScheduleEnabled(true)}} 
-                    className="text-xs h-8 px-3 flex items-center"
-                  >
-                    <Calendar className="h-4 w-4 mr-1.5" />
-                    Schedule Task
-                  </Button>
+                  <>
+                    <Button 
+                      size="sm" 
+                      onClick={() => {setIsEditing(false); setIsScheduleEnabled(true)}} 
+                      className="text-xs h-8 px-3 flex items-center"
+                      disabled={selectedTask.status == statuses[5] && selectedTask.task_schedules?.length > 0}
+                    >
+                      <Calendar className="h-4 w-4 mr-1.5" />
+                      Schedule Task
+                    </Button>
+                  </>
                 )}
               </div>
             </>

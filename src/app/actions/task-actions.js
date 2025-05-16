@@ -83,6 +83,13 @@ export const updateTask = async (task_id, taskData) => {
       sub_category: taskData.sub_category,
       status: taskData.status
     };
+
+    if(taskData.indicators){
+      payload.indicators = taskData.indicators;
+    }
+    if(taskData.settings){
+      payload.settings = taskData.settings;
+    }
     
     // Call the updateTask API function (you need to implement this in your API route)
     return await updateTaskApi(task_id, payload);

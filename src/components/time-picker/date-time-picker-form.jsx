@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,6 +25,7 @@ import { cn } from '../../../lib/utils'
 import { TimePicker } from './time-picker'
 import { format } from 'date-fns'
 import { createNewScheduleEntry } from '@/app/api/tasks/route'
+import { updateTask } from '@/app/actions/task-actions'
   
 const formSchema = z.object({
   start_time: z.date(),
@@ -36,10 +36,18 @@ const formSchema = z.object({
   path: ["end_time"],
 });
 
-const DateTimePickerForm = ({setIsScheduleEnabled, taskId}) => {
+const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [isRecurringEnabled, setIsRecurringEnabled] = useState(false);
   
+  // RecurringForm state
+  const [pattern, setPattern] = useState('daily');
+  const [interval, setInterval] = useState(1);
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedMonthDays, setSelectedMonthDays] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,13 +56,75 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId}) => {
       remarks: "",
     },
   })
+  
+  // Helper functions from RecurringForm
+  const toggleDay = (dayIndex) => {
+    if (selectedDays.includes(dayIndex)) {
+      setSelectedDays(selectedDays.filter(day => day !== dayIndex));
+    } else {
+      setSelectedDays([...selectedDays, dayIndex]);
+    }
+  };
+  
+  const toggleMonthDay = (dayNum) => {
+    if (selectedMonthDays.includes(dayNum)) {
+      setSelectedMonthDays(selectedMonthDays.filter(day => day !== dayNum));
+    } else {
+      setSelectedMonthDays([...selectedMonthDays, dayNum]);
+    }
+  };
+  
+  const toggleMonth = (monthIndex) => {
+    if (selectedMonths.includes(monthIndex)) {
+      setSelectedMonths(selectedMonths.filter(month => month !== monthIndex));
+    } else {
+      setSelectedMonths([...selectedMonths, monthIndex]);
+    }
+  };
+  
+  const getOrdinalSuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+  
+  // List of month names
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June', 
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
  
+  // Main form submission
   async function onSubmit(values) {
     setIsSubmitting(true);
     setError(null);
     
     try {
-      await createNewScheduleEntry({...values, task_id: taskId});
+      if (isRecurringEnabled) {
+        values.remarks = "recurring"
+      }
+      
+      let scheduleResponse = await createNewScheduleEntry({...values, task_id: taskId});
+
+      if(isRecurringEnabled && scheduleResponse?.id){
+        const recurrenceData = {
+          pattern,
+          interval: parseInt(interval),
+          selectedDays: pattern === 'weekly' ? selectedDays : [],
+          selectedMonthDays: pattern === 'monthly' ? selectedMonthDays : [],
+          selectedMonths: pattern === 'yearly' ? selectedMonths : [],
+        };
+        debugger;
+        // Send the recurrence data to the server
+        const response = await updateTask(selectedTask.id, {
+          ...selectedTask, 
+          settings: {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }  }
+        });
+      }
       setIsScheduleEnabled(false);
     } catch (err) {
       setError(err.message || "Failed to schedule task. Please try again.");
@@ -198,6 +268,111 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId}) => {
               </FormItem>
             )}
           />
+
+          {/* Integrated recurring form */}
+          {isRecurringEnabled && (
+            <div className="w-full bg-white rounded-md p-4 border border-gray-200 shadow-sm">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Set Recurring Schedule</h4>
+              
+              <fieldset className="space-y-4">
+                {/* Form fields */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeat Pattern</label>
+                  <select
+                    value={pattern}
+                    onChange={(e) => setPattern(e.target.value)}
+                    className="w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+                
+                {/* Weekly pattern with day selection */}
+                <div className={pattern === 'weekly' ? 'block' : 'hidden'}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Days of Week</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                      <div key={day} className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id={`day-${index}`}
+                          checked={selectedDays.includes(index)}
+                          onChange={() => toggleDay(index)}
+                          className="mr-1 rounded"
+                        />
+                        <label htmlFor={`day-${index}`} className="text-sm">{day}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly pattern with date selection as checkboxes */}
+                <div className={pattern === 'monthly' ? 'block' : 'hidden'}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Days of Month</label>
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                    {[...Array(31)].map((_, i) => {
+                      const dayNum = i + 1;
+                      return (
+                        <div key={dayNum} className="flex items-center">
+                          <input 
+                            type="checkbox" 
+                            id={`month-day-${dayNum}`}
+                            checked={selectedMonthDays.includes(dayNum)}
+                            onChange={() => toggleMonthDay(dayNum)}
+                            className="mr-1 rounded"
+                          />
+                          <label htmlFor={`month-day-${dayNum}`} className="text-sm">
+                            {dayNum}<sup>{getOrdinalSuffix(dayNum)}</sup>
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Yearly pattern with month selection */}
+                <div className={pattern === 'yearly' ? 'block' : 'hidden'}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Months of Year</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {months.map((month, index) => (
+                      <div key={month} className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id={`month-${index}`}
+                          checked={selectedMonths.includes(index)}
+                          onChange={() => toggleMonth(index)}
+                          className="mr-1 rounded"
+                        />
+                        <label htmlFor={`month-${index}`} className="text-sm">{month}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeat Every</label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      min="1"
+                      value={interval}
+                      onChange={(e) => setInterval(e.target.value)}
+                      className="w-20 p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-gray-600">
+                      {pattern === 'daily' ? 'days' : 
+                       pattern === 'weekly' ? 'weeks' : 
+                       pattern === 'monthly' ? 'months' : 'years'}
+                    </span>
+                  </div>
+                </div>
+                
+              </fieldset>
+            </div>
+          )}
           
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
@@ -206,6 +381,20 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId}) => {
           )}
           
           <div className="flex items-center justify-end space-x-2 pt-3 border-t border-gray-100">
+            <Button 
+              variant={isRecurringEnabled ? "default" : "outline"}
+              type="button"
+              size="sm" 
+              onClick={() => {setIsRecurringEnabled(prevState => !prevState)}} 
+              className={`text-xs h-8 px-3 flex items-center }`}
+              disabled={isSubmitting}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
+                <path d="M2 12a10 10 0 0 1 10-10v2a8 8 0 0 0-8 8h2l-4 4-4-4h2Z"/>
+                <path d="M22 12a10 10 0 0 1-10 10v-2a8 8 0 0 0 8-8h-2l4-4 4 4h-2Z"/>
+              </svg>
+              {isRecurringEnabled ? "Cancel Recurring" : "Make Recurring"}
+            </Button>
             <Button 
               type="button"
               variant="outline" 
@@ -228,7 +417,7 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId}) => {
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Schedule Task
+                  {"Schedule Task"}
                 </>
               )}
             </Button>
