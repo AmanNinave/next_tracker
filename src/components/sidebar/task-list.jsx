@@ -8,6 +8,15 @@ import { Calendar, Clock, Clipboard, ArrowRight } from "lucide-react"; // Import
 import { Badge } from "@/components/ui/badge"; // Assuming you have a Badge component from your UI library
 import { statuses, categories_and_subcategories } from "@/utils/constants";
 import { updateTask } from "@/app/actions/task-actions";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+
+// Configure dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 function getStatusColor(status) {
   switch (status?.toLowerCase()) {
     case "pending":
@@ -50,6 +59,7 @@ const TaskList = ({ tasks }) => {
     }
   }, [selectedTask]);
 
+
   const handleTaskUpdate = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -86,16 +96,22 @@ const TaskList = ({ tasks }) => {
     setIsScheduleEnabled(false);
   };
 
+  // Format datetime in Indian timezone
   const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    }).format(date);
+    if (!dateString) return "N/A";
+    
+    // First parse as UTC, then convert to Indian timezone
+    return dayjs.utc(dateString)
+      .tz("Asia/Kolkata")
+      .format("D MMM YYYY, h:mm A");
+  };
+
+    // Calculate duration in minutes
+  const calculateDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return 0;
+    return Math.round(
+      (dayjs(endTime).valueOf() - dayjs(startTime).valueOf()) / 60000
+    );
   };
 
   return (
@@ -320,7 +336,7 @@ const TaskList = ({ tasks }) => {
                 <div className="border-t pt-3">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                     <Calendar className="h-4 w-4 mr-1 text-gray-500" />
-                    Scheduled Times
+                    Scheduled Times (Indian Timezone)
                   </h4>
                   <div className="space-y-3">
                     {selectedTask.task_schedules.map((schedule) => (
@@ -328,8 +344,8 @@ const TaskList = ({ tasks }) => {
                         <div className="flex justify-between items-center mb-2">
                           <h5 className="text-sm font-medium text-gray-700">Schedule #{schedule.id}</h5>
                           <span className="text-xs text-gray-500">
-                            {new Date(schedule.end_time).getTime() - new Date(schedule.start_time).getTime() > 0
-                              ? `${Math.round((new Date(schedule.end_time).getTime() - new Date(schedule.start_time).getTime()) / 60000)} min`
+                            {calculateDuration(schedule.start_time, schedule.end_time) > 0
+                              ? `${calculateDuration(schedule.start_time, schedule.end_time)} min`
                               : "Invalid duration"}
                           </span>
                         </div>
@@ -359,8 +375,8 @@ const TaskList = ({ tasks }) => {
                                   <div className="flex justify-between items-center">
                                     <span className="font-medium">Log #{log.id}</span>
                                     <span className="text-gray-500">
-                                      {log.end_time && new Date(log.end_time).getTime() - new Date(log.start_time).getTime() > 0
-                                        ? `${Math.round((new Date(log.end_time).getTime() - new Date(log.start_time).getTime()) / 60000)} min`
+                                      {log.end_time && calculateDuration(log.start_time, log.end_time) > 0
+                                        ? `${calculateDuration(log.start_time, log.end_time)} min`
                                         : "In progress"}
                                     </span>
                                   </div>
