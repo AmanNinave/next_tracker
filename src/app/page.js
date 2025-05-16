@@ -20,7 +20,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="">
+    <div className="h-screen w-screen overflow-hidden">
       <Header  />
       <MainView tasksData={tasks} taskSchedulesData={taskSchedules} />
     </div>

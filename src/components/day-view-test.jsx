@@ -113,7 +113,7 @@ const App = () => {
   };
 
   return (
-    <div className="relative w-full h-screen border border-gray-300 overflow-y-auto">
+    <div className="relative w-full h-[calc(100vh-64px)] border border-gray-300 overflow-y-auto">
       {renderHours()}
       {renderEvents()}
       {renderCurrentTime()}

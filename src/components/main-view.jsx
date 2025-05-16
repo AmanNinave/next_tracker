@@ -35,7 +35,7 @@ export default function MainView({ tasksData , taskSchedulesData }) {
   }, [tasksData, setEvents]);
 
   return (
-    <div className="flex">
+    <div className="flex mt-[64px] h-[calc(100vh-64px)]">
       {/* SideBar */}
       <SideBar tasksData={tasksData}/>
 
