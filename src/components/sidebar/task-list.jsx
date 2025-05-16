@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import DateTimePickerForm from "../time-picker/date-time-picker-form";
 import { Calendar, Clock, Clipboard, ArrowRight } from "lucide-react"; // Import icons
 import { Badge } from "@/components/ui/badge"; // Assuming you have a Badge component from your UI library
-
+import { statuses, categories_and_subcategories } from "@/utils/constants";
 function getStatusColor(status) {
   switch (status?.toLowerCase()) {
     case "pending":
@@ -23,6 +23,11 @@ function getStatusColor(status) {
 const TaskList = ({ tasks }) => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(statuses[1]);
+  const [currentCategory, setCurrentCategory] = useState("all");
+
+  // Get all available categories from the constants
+  const allCategories = ["all", ...Object.keys(categories_and_subcategories)];
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
@@ -48,45 +53,88 @@ const TaskList = ({ tasks }) => {
   return (
     <div className="w-full">
       <div className="p-2 pt-0 border-b border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-          <Clipboard className="w-5 h-5 mr-2 text-gray-600" />
-          Tasks List
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+            <Clipboard className="w-5 h-5 mr-2 text-gray-600" />
+            Tasks List
+          </h2>
+          
+          <div className="flex items-center gap-2">
+            <select
+              value={currentCategory}
+              onChange={(e) => setCurrentCategory(e.target.value)}
+              className="text-xs border border-gray-200 rounded-md py-1 px-2 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {allCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category === "all" ? "All Categories" : category}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={currentStatus}
+              onChange={(e) => setCurrentStatus(e.target.value)}
+              className="text-xs border border-gray-200 rounded-md py-1 px-2 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
       
-      <div className="p-3 space-y-3 h-80 overflow-y-auto">
+      <div className="pt-3 pb-3 space-y-3 h-80 overflow-y-auto">
         {tasks.length > 0 ? (
-          tasks.map((task) => (
-            <div
-              key={task.id}
-              onClick={() => handleTaskClick(task)}
-              className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:shadow-md hover:border-gray-300 bg-white"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium text-gray-900">{task.title}</h3>
-                <Badge className={`text-xs px-2 py-1 rounded-full ${getStatusColor(task.status)}`}>
-                  {task.status || "Pending"}
-                </Badge>
-              </div>
-              <div className="flex items-center text-sm text-gray-500 space-x-2">
-                <span>{task.category}</span>
-                {task.sub_category && (
-                  <>
-                    <span>•</span>
-                    <span>{task.sub_category}</span>
-                  </>
-                )}
-              </div>
-              {task.task_schedules?.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-center">
-                  <Clock className="h-3.5 w-3.5 mr-1" />
-                  <span>
-                    Next: {formatDateTime(task.task_schedules[0].start_time)}
-                  </span>
+          (() => {
+            const filteredTasks = tasks.filter(task => 
+              task.status === currentStatus && 
+              (currentCategory === "all" || task.category === currentCategory)
+            );
+            
+            return filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => handleTaskClick(task)}
+                  className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:shadow-md hover:border-gray-300 bg-white"
+                >
+                  {/* Task content - keep all your existing task card content here */}
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium text-gray-900">{task.title}</h3>
+                    <Badge className={`text-xs px-2 py-1 rounded-full ${getStatusColor(task.status)}`}>
+                      {task.status || currentStatus}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500 space-x-2">
+                    <span>{task.category}</span>
+                    {task.sub_category && (
+                      <>
+                        <span>•</span>
+                        <span>{task.sub_category}</span>
+                      </>
+                    )}
+                  </div>
+                  {task.task_schedules?.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-center">
+                      <Clock className="h-3.5 w-3.5 mr-1" />
+                      <span>
+                        Next: {formatDateTime(task.task_schedules[0].start_time)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                <Clipboard className="h-12 w-12 mb-2 opacity-20" />
+                <p>No tasks match your filters</p>
+              </div>
+            );
+          })()
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500">
             <Clipboard className="h-12 w-12 mb-2 opacity-20" />
