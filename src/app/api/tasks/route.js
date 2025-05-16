@@ -91,3 +91,7 @@ export const createNewLogEntry = async (payload) => {
 export const updateLogEntry = async (id, payload) => {
   return apiCall(`${API_URL}/task-log/${id}`, "PUT", payload);
 };
+
+export const updateTaskApi = async (task_id, payload) => {
+  return apiCall(`${API_URL}/task/${task_id}`, "PUT", payload);
+};

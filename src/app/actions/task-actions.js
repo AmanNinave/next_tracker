@@ -4,7 +4,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { redirect } from "next/navigation";
 
-import { createNewScheduleEntry, createNewTask, fetchTasks, fetchTaskSchedules } from '@/app/api/tasks/route';
+import { createNewScheduleEntry, createNewTask, fetchTasks, fetchTaskSchedules, updateTaskApi } from '@/app/api/tasks/route';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -69,3 +69,28 @@ export const createTask = async (formData) => {
   }
 }
 
+export const updateTask = async (task_id, taskData) => {
+  try {
+    // For direct object updates (not FormData)
+    if (typeof taskData !== 'object' || taskData instanceof FormData) {
+      throw new Error("Invalid task data format");
+    }
+    
+    const payload = {
+      title: taskData.title,
+      description: taskData.description,
+      category: taskData.category,
+      sub_category: taskData.sub_category,
+      status: taskData.status
+    };
+    
+    // Call the updateTask API function (you need to implement this in your API route)
+    return await updateTaskApi(task_id, payload);
+  } catch (error) {
+    console.error("Error updating task in the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
+    throw error; // Re-throw to handle in the component
+  }
+}
