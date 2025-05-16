@@ -77,22 +77,22 @@ export default function HeaderLeft(tasksData) {
         >
           <Menu className="size-6" />
         </Button>
-        <Image
+        {/* <Image
           src={`/img/calendar_${todaysDate.date().toString()}_2x.png`}
           width={40}
           height={40}
           alt="icon"
         />
-        <h1 className="text-xl">Calendar</h1>
+        <h1 className="text-xl">Calendar</h1> */}
       </div>
 
       {/* Today Button */}
-      <Button variant="outline" onClick={handleTodayClick}>
+      {/* <Button variant="outline" onClick={handleTodayClick}>
         Today
-      </Button>
+      </Button> */}
 
       {/* Navigation Controls */}
-      <div className="flex items-center gap-3">
+      {/* <div className="flex items-center gap-3">
         <MdKeyboardArrowLeft
           className="size-6 cursor-pointer font-bold"
           onClick={handlePrevClick}
@@ -101,12 +101,20 @@ export default function HeaderLeft(tasksData) {
           className="size-6 cursor-pointer font-bold"
           onClick={handleNextClick}
         />
-      </div>
+      </div> */}
 
-      {/* Current Month and Year Display */}
+      {/* Current Date Display */}
       <h1 className="hidden text-xl lg:block">
-        {dayjs(new Date(dayjs().year(), selectedMonthIndex)).format(
-          "MMMM YYYY",
+        {selectedView === "month" && (
+          dayjs(new Date(dayjs().year(), selectedMonthIndex)).format("MMMM YYYY")
+        )}
+        {selectedView === "week" && (
+          <>
+            {userSelectedDate.startOf('week').format("MMM D")} - {userSelectedDate.endOf('week').format("MMM D, YYYY")}
+          </>
+        )}
+        {selectedView === "day" && (
+          userSelectedDate.format("dddd, MMMM D, YYYY")
         )}
       </h1>
     </div>

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useViewStore } from "./../../../lib/store";
+import Create from "../create";
 
 export default function HeaderRight() {
 
@@ -17,7 +18,9 @@ export default function HeaderRight() {
   return (
     <div className="flex items-center space-x-4">
     {/* <SearchComponent /> */}
-    <Select onValueChange={(v) => setView(v)}>
+    <Create />
+
+    {/* <Select onValueChange={(v) => setView(v)}>
       <SelectTrigger className="w-24 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:ring-offset-0">
         <SelectValue placeholder="Day" />
       </SelectTrigger>
@@ -26,12 +29,12 @@ export default function HeaderRight() {
         <SelectItem value="week">Week</SelectItem>
         <SelectItem value="month">Month</SelectItem>
       </SelectContent>
-    </Select>
+    </Select> */}
 
-    <Avatar>
+    {/* <Avatar>
       <AvatarImage src="/img/inst2.png" />
       <AvatarFallback>CN</AvatarFallback>
-    </Avatar>
+    </Avatar> */}
   </div>
   )
 }

@@ -46,8 +46,8 @@ const TaskList = ({ tasks }) => {
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-100">
+    <div className="w-full">
+      <div className="p-2 pt-0 border-b border-gray-100">
         <h2 className="text-lg font-semibold text-gray-800 flex items-center">
           <Clipboard className="w-5 h-5 mr-2 text-gray-600" />
           Tasks List

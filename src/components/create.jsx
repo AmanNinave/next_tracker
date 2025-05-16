@@ -3,9 +3,9 @@
 import React, { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { useDateStore } from "./../../../lib/store";
-import { SvgIcons } from "../svg-icons";
-import EventPopover from "../event-popover";
+import { useDateStore } from "../../lib/store";
+import { SvgIcons } from "./svg-icons";
+import EventPopover from "./event-popover";
 
 export default function Create() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -26,12 +26,12 @@ export default function Create() {
     <>
       <Button
         variant="ghost"
-        className="w-[150px] justify-start rounded-full py-6 shadow"
+        className="w-[120px] justify-center rounded-full py-6 shadow"
         onClick={handleOpenPopover}
       >
         <SvgIcons.googleCreate className="mr-2 h-8 w-8" /> 
         <span> Create </span> 
-        <ChevronDown />
+        {/* <ChevronDown /> */}
       </Button>
       {isPopoverOpen && (
         <EventPopover
