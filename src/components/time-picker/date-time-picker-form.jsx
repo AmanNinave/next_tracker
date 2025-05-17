@@ -3,6 +3,14 @@ import React, { useState } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// Then initialize the plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
  
 import { Button } from "@/components/ui/button"
 import {
@@ -37,7 +45,7 @@ const formSchema = z.object({
   path: ["end_time"],
 });
 
-const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask}) => {
+const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask, setSelectedTask}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isRecurringEnabled, setIsRecurringEnabled] = useState(false);
@@ -112,9 +120,17 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask}) => {
       
       let scheduleResponse = await createNewScheduleEntry({...values, task_id: taskId});
 
+      scheduleResponse.start_time = dayjs.utc(scheduleResponse.start_time).tz("Asia/Kolkata").format(),
+      scheduleResponse.end_time = dayjs.utc(scheduleResponse.end_time).tz("Asia/Kolkata").format(),
       setTaskSchedules([...taskSchedules, scheduleResponse]);
 
       if( scheduleResponse?.id ){
+
+        let updatedSelectedTask = {
+          ...selectedTask, 
+          task_schedules : [...selectedTask.task_schedules, scheduleResponse]
+        }
+
         if(isRecurringEnabled){
           const recurrenceData = {
             pattern,
@@ -129,25 +145,18 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask}) => {
             ...selectedTask, 
             settings: {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }  }
           });
-          debugger;
-          let updatedTasks = tasks.map(task =>
-            task.id === selectedTask.id ? {
-              ...selectedTask, 
-              settings: {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }  },
-              task_schedules : [...selectedTask.task_schedules, scheduleResponse]
-            } : task
-          );
-          setTasks(updatedTasks);
-        }else{
-          debugger;
-          let updatedTasks = tasks.map(task =>
-            task.id === selectedTask.id ? {
-              ...selectedTask, 
-              task_schedules : [...selectedTask.task_schedules, scheduleResponse]
-            } : task
-          );
-          setTasks(updatedTasks);
+          
+          updatedSelectedTask.settings = {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }};
         }
+        // Update the selected task in the state
+        setSelectedTask(updatedSelectedTask);
+
+        // Update the task list with the new schedule
+        let updatedTasks = tasks.map(task =>
+          task.id === selectedTask.id ? updatedSelectedTask : task
+        );
+        setTasks(updatedTasks);
+        
       }
       setIsScheduleEnabled(false);
     } catch (err) {

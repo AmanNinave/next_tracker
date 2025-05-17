@@ -423,6 +423,7 @@ const TaskList = () => {
                   setIsScheduleEnabled={setIsScheduleEnabled}
                   taskId={selectedTask.id} 
                   selectedTask={selectedTask}
+                  setSelectedTask={setSelectedTask}
                 />
               )}
 
