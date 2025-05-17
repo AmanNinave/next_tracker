@@ -8,7 +8,7 @@ import { EventRenderer } from "./event-renderer";
 
 export default function WeekView() {
   const [currentTime, setCurrentTime] = useState(dayjs());
-  const { openPopover, events } = useEventStore();
+  const { openPopover, taskSchedules } = useEventStore();
   const { userSelectedDate, setDate } = useDateStore();
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function WeekView() {
                       }}
                     >
                       <EventRenderer
-                        events={events}
+                        taskSchedules={taskSchedules}
                         date={dayDate.hour(hour.hour())}
                         view="week"
                       />

@@ -4,10 +4,10 @@ import { useEventStore } from "./../../lib/store";
 import dayjs from "dayjs";
 import React from "react";
 
-export function EventRenderer({ date, view, events }) {
+export function EventRenderer({ date, view, taskSchedules }) {
   const { openEventSummary } = useEventStore();
-  console.log(events);
-  const filteredEvents = events.filter((event) => {
+  
+  const filteredEvents = taskSchedules.filter((event) => {
     if (view === "month") {
       return event.date.format("DD-MM-YY") === date.format("DD-MM-YY");
     } else if (view === "week" || view === "day") {

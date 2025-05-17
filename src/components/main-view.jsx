@@ -16,7 +16,7 @@ import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import DayView from './day-view-test';
 
-export default function MainView({ tasksData , taskSchedulesData }) {
+export default function MainView({ tasksData , taskSchedulesData, taskLogsData }) {
   const { selectedView } = useViewStore();
 
   const {
@@ -25,14 +25,21 @@ export default function MainView({ tasksData , taskSchedulesData }) {
     isEventSummaryOpen,
     closeEventSummary,
     selectedEvent,
-    setEvents,
+
+    setTasks,
+    setTaskLogs,
+    setTaskSchedules,
   } = useEventStore();
 
   const { userSelectedDate } = useDateStore();
 
   useEffect(() => {
-    setEvents(taskSchedulesData);
-  }, [tasksData, setEvents]);
+
+    setTasks(tasksData);
+    setTaskLogs(taskLogsData);
+    setTaskSchedules(taskSchedulesData);
+
+  }, [tasksData,taskSchedulesData, taskLogsData]);
 
   return (
     <div className="flex mt-[64px] h-[calc(100vh-64px)]">

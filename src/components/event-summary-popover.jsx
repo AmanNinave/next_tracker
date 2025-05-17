@@ -72,6 +72,7 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
         if (shouldStart) {
           result = await createNewLogEntry({
             task_schedule_id: task.id,
+            task_id: task.task.id,
             start_time: new Date(),
             end_time: null,
             remarks: '',

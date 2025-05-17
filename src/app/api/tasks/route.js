@@ -76,6 +76,36 @@ export const fetchTaskSchedules = async () => {
   return apiCall(`${API_URL}/task-schedule`);
 };
 
+export const fetchTaskSchedulesDataByDuration = async (startDate, endDate = null, skip = 0, limit = 100) => {
+  // Create base URL with required startDate parameter
+  let url = `${API_URL}/task-schedule/duration/?start_date=${encodeURIComponent(startDate)}`;
+  
+  // Add optional endDate if provided
+  if (endDate) {
+    url += `&end_date=${encodeURIComponent(endDate)}`;
+  }
+  
+  // Add pagination parameters
+  url += `&skip=${skip}&limit=${limit}`;
+  
+  return apiCall(url);
+};
+
+export const fetchTaskLogsDataByDuration = async (startDate, endDate = null, skip = 0, limit = 100) => {
+  // Create base URL with required startDate parameter
+  let url = `${API_URL}/task-log/duration/?start_date=${encodeURIComponent(startDate)}`;
+  
+  // Add optional endDate if provided
+  if (endDate) {
+    url += `&end_date=${encodeURIComponent(endDate)}`;
+  }
+  
+  // Add pagination parameters
+  url += `&skip=${skip}&limit=${limit}`;
+  
+  return apiCall(url);
+};
+
 export const createNewTask = async (payload) => {
   return apiCall(`${API_URL}/task`, "POST", payload);
 };

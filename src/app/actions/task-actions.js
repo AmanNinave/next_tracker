@@ -4,7 +4,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { redirect } from "next/navigation";
 
-import { createNewScheduleEntry, createNewTask, fetchTasks, fetchTaskSchedules, updateTaskApi } from '@/app/api/tasks/route';
+import { createNewScheduleEntry, createNewTask, fetchTaskLogsDataByDuration, fetchTasks, fetchTaskSchedules, fetchTaskSchedulesDataByDuration, updateTaskApi } from '@/app/api/tasks/route';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -24,6 +24,52 @@ export const getTasks = async () => {
 export const getTaskSchedulesData = async () => {
   try {
     const data = await fetchTaskSchedules();
+
+    return data.map((task) => ({
+      ...task,
+      date: dayjs.utc(task.start_time).tz("Asia/Kolkata").format(),
+      start_time: dayjs.utc(task.start_time).tz("Asia/Kolkata").format(),
+      end_time: dayjs.utc(task.end_time).tz("Asia/Kolkata").format(),
+    }));
+  } catch (error) {
+    console.error("Error fetching data from the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
+    return
+  }
+}
+
+export const getTaskSchedulesDataByDuration = async () => {
+  try {
+    const startDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const endDate = dayjs().add(1, "day").format("YYYY-MM-DD");
+    const skip = 0;
+    const limit = 100;
+    const data = await fetchTaskSchedulesDataByDuration(startDate);
+
+    return data.map((task) => ({
+      ...task,
+      date: dayjs.utc(task.start_time).tz("Asia/Kolkata").format(),
+      start_time: dayjs.utc(task.start_time).tz("Asia/Kolkata").format(),
+      end_time: dayjs.utc(task.end_time).tz("Asia/Kolkata").format(),
+    }));
+  } catch (error) {
+    console.error("Error fetching data from the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
+    return
+  }
+}
+
+export const getTaskLogsDataByDuration = async () => {
+  try {
+    const startDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    // const endDate = dayjs().format("YYYY-MM-DD");
+    // const skip = 0;
+    // const limit = 100;
+    const data = await fetchTaskLogsDataByDuration(startDate);
 
     return data.map((task) => ({
       ...task,

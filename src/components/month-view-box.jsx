@@ -5,7 +5,7 @@ import React from "react";
 import { EventRenderer } from "./event-renderer";
 
 export default function MonthViewBox({ day, rowIndex }) {
-  const { openPopover, events } = useEventStore();
+  const { openPopover, taskSchedules } = useEventStore();
   const { setDate } = useDateStore();
 
   if (!day) {
@@ -47,7 +47,7 @@ export default function MonthViewBox({ day, rowIndex }) {
           {isFirstDayOfMonth ? day.format("MMM D") : day.format("D")}
         </h4>
       </div>
-      <EventRenderer date={day} view="month" events={events} />
+      <EventRenderer date={day} view="month" taskSchedules={taskSchedules} />
     </div>
   );
 }

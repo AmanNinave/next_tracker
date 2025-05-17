@@ -5,7 +5,7 @@ import { useDateStore, useEventStore } from './../../lib/store';
 
 const App = () => {
   const [currentTime, setCurrentTime] = useState(dayjs());
-  const { openPopover, events, openEventSummary } = useEventStore();
+  const { openPopover, taskSchedules, taskLogs, openEventSummary } = useEventStore();
   const { userSelectedDate, setDate } = useDateStore();
 
   useEffect(() => {
@@ -37,18 +37,38 @@ const App = () => {
     ));
   };
 
-  const renderEvents = () => {
-    const filteredEvents = events.filter(event => {
+  const renderEvents = (type , data ) => {
+    debugger;
+    const filteredEvents = data.filter(event => {
       const eventDate = dayjs(event.start_time).format('DD-MM-YY');
-      return eventDate === userSelectedDate.format('DD-MM-YY');
+      const isCorrectDate = eventDate === userSelectedDate.format('DD-MM-YY');
+      
+      if (!isCorrectDate) return false;
+      
+      const eventStartTime = dayjs(event.start_time);
+      const eventEndTime = dayjs(event.end_time);
+      
+      // For logs: show only events before current time
+      if (type === "logs") {
+        return eventStartTime.isBefore(dayjs());
+      }
+      
+      // For schedules: show only events after current time
+      if (type === "schedules") {
+        return eventEndTime.isAfter(dayjs());
+      }
+      
+      return true;
     });
+    
     return filteredEvents.map((event, index) => {
-      const start = dayjs(event.start_time);
-      const end = dayjs(event.end_time)
-      const duration = end.diff(start, 'minute');
-      const top = start.hour() * 60 + start.minute();
+      let start = dayjs(event.start_time);
+      let end = dayjs(event.end_time);
+      let duration = end.diff(start, 'minute');
+      let top = start.hour() * 60 + start.minute();
 
-      const overlappingEvents = events.filter(e => {
+      // Only check for overlapping with same type of events
+      const overlappingEvents = data.filter(e => {
         const eStart = dayjs(e.start_time);
         const eEnd = dayjs(e.end_time);
         return (
@@ -61,6 +81,22 @@ const App = () => {
       let width = 'calc(100% - 120px)';
       let left = '90px';
 
+      // Add color based on type
+      let bgColor = type === "logs" ? "bg-red-500" : "bg-blue-500";
+      let borderColor = type === "logs" ? "border-red-300" : "border-blue-300";
+      let textColor = type === "logs" ? "text-gray-100" : "text-gray-200";
+
+      if(event.end_time == "Invalid Date" ) {
+        
+        bgColor = "bg-green-500";
+        borderColor = "border-green-300";
+        textColor = "text-gray-100";
+
+        end = dayjs(new Date());
+        duration = end.diff(start, 'minute');
+
+      }
+
       // if (overlappingEvents.length > 0) {
       //   width = `calc((100% - 120px) / ${overlappingEvents.length + 1})`;
       //   left = `${90 + overlappingEvents.findIndex(e => e === event) * parseFloat(width)}px`;
@@ -68,8 +104,8 @@ const App = () => {
 
       return (
         <div
-          key={index}
-          className="absolute bg-blue-500 text-white rounded-md p-2 pt-0 text-sm shadow-md border border-white-300 overflow-hidden group"
+          key={`${type}-${index}`}
+          className={`absolute ${bgColor} text-white rounded-md p-2 pt-0 text-sm shadow-md border ${borderColor} overflow-hidden group`}
           style={{
             top: `${top}px`,
             height: `${duration}px`,
@@ -78,12 +114,12 @@ const App = () => {
           }}
           onClick={(e) => {
             e.stopPropagation();
-            openEventSummary(event);
+            type === "schedules" && openEventSummary(event);
           }}
         >
-          <strong>{event.task.title}</strong>
+          <strong>{event.task?.title || "Untitled Task"}</strong>
           <br />
-          <span className="text-gray-200 text-xs">
+          <span className={`${textColor} text-xs`}>
             {start.format('h:mm A')} - {end.format('h:mm A')}
           </span>
         </div>
@@ -115,7 +151,8 @@ const App = () => {
   return (
     <div className="relative w-full h-[calc(100vh-64px)] border border-gray-300 overflow-y-auto">
       {renderHours()}
-      {renderEvents()}
+      {renderEvents("schedules",taskSchedules)}
+      {renderEvents("logs",taskLogs)}
       {renderCurrentTime()}
     </div>
   );
