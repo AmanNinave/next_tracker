@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 import { useDateStore } from "../../lib/store";
 import { SvgIcons } from "./svg-icons";
 import EventPopover from "./event-popover";
+import { PlusCircle } from "lucide-react";
 
 export default function Create() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -24,15 +23,15 @@ export default function Create() {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        className="w-[120px] justify-center rounded-full py-6 shadow"
+      <button
+        type="button"
         onClick={handleOpenPopover}
+        className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white shadow-sm hover:bg-blue-700 flex items-center"
       >
-        <SvgIcons.googleCreate className="mr-2 h-8 w-8" /> 
-        <span> Create </span> 
-        {/* <ChevronDown /> */}
-      </Button>
+        <PlusCircle className="mr-2 h-4 w-4" />
+        Create
+      </button>
+      
       {isPopoverOpen && (
         <EventPopover
           isOpen={isPopoverOpen}
@@ -43,4 +42,3 @@ export default function Create() {
     </>
   );
 }
-

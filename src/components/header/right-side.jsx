@@ -8,8 +8,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useViewStore } from "./../../../lib/store";
+import {  useViewStore } from "./../../../lib/store";
 import Create from "../create";
+import { View } from "lucide-react";
+import ViewModeSelector from "../view-mode-selector";
 
 export default function HeaderRight() {
 
@@ -18,6 +20,8 @@ export default function HeaderRight() {
   return (
     <div className="flex items-center space-x-4">
     {/* <SearchComponent /> */}
+    <ViewModeSelector />
+
     <Create />
 
     {/* <Select onValueChange={(v) => setView(v)}>
