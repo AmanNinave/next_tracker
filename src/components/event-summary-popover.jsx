@@ -38,13 +38,12 @@ function getStatusColor(status) {
 }
 
 export function EventSummaryPopover({ isOpen, onClose, task }) {
-  console.log("EventSummaryPopover", task);
   const popoverRef = useRef(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isPending, startTransition] = useTransition();
   const { taskLogs, setTaskLogs, taskSchedules, setTaskSchedules } = useEventStore();
-
+  console.log("taskLogs", task);
   let lastLogData = task.task_logs[task.task_logs.length - 1];
   // Add states for remarks
   const [showRemarksInput, setShowRemarksInput] = useState(false);
@@ -66,75 +65,203 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
     };
   }, [isOpen, onClose]);
 
-
-  const handleSaveLog = (shouldStart) => {
+  const resetStates = () => {
     setError(null);
     setSuccess(null);
-    debugger;
-    // if (shouldStart) {
-    //   return;
-    // }
+  };
+  
+  // Handle starting a task
+  const handleStartTask = () => {
+    resetStates();
+    
     startTransition(async () => {
       try {
-        let result;
-        if (shouldStart) {
-          result = await createNewLogEntry({
-            task_schedule_id: task.id,
-            task_id: task.task.id,
-            start_time: new Date(),
-            end_time: null,
-            remarks: remarks.trim(),
-          });
-          result.start_time = dayjs();
-          if (result.id) {
-            setTaskLogs([...taskLogs, result]);
-            setSuccess("Task started successfully.");
-            onClose();
-          }
-        }else {
-          let lastLogData = task.task_logs[task.task_logs.length - 1];
-          if (lastLogData.end_time) {
-            setError("You have already ended this task.");
-            return;
-          }
-          if (!lastLogData.start_time) {
-            setError("You have not started this task yet.");
-            return;
-          }
-          if (lastLogData.start_time > new Date()) {
-            setError("You cannot end a task that has not started yet.");
-            return;
-          }
-          if (lastLogData.start_time > lastLogData.end_time) {
-            setError("End time cannot be before start time.");
-            return;
-          }
-          result = await updateLogEntry(task.task_logs[task.task_logs.length - 1].id ,{
-            start_time: lastLogData.start_time,
-            end_time: new Date(),
-            remarks: remarks.trim(),
-          });
-          if (result.id) {
-            let updatedLogs = taskLogs.map((log) => {
-              if (log.id === result.id) {
-                return { ...log, end_time: dayjs() };
-              }
-              return log;
-            }
+        // Check if any task is already running
+        const runningTaskLog = taskLogs.find(log => log.end_time === null);
+        
+        if (runningTaskLog) {
+          // Option 1: Show a confirmation dialog
+          if (confirm("You have a running task. Do you want to end it before starting this one?")) {
+            // End the running task first
+            const taskSchedule = taskSchedules.find(schedule => 
+              schedule.task_logs.some(log => log.id === runningTaskLog.id)
             );
-            setTaskLogs(updatedLogs);
-            setSuccess("Task started successfully.");
-            onClose();
+            
+            if (taskSchedule) {
+              // Create a temporary task object with the running log for endTask
+              const runningTask = {
+                id: taskSchedule.id,
+                task: { id: taskSchedule.task.id },
+                task_logs: taskSchedule.task_logs.filter(log => log.id === runningTaskLog.id)
+              };
+              
+              // Call endTask for the running task
+              await endRunningTask(runningTask, runningTaskLog);
+            }
+          } else {
+            // User chose not to end running task
+            setError("Please end the running task first.");
+            return;
           }
+        }
+        
+        // Create new log entry for current task
+        const result = await createNewLogEntry({
+          task_schedule_id: task.id,
+          task_id: task.task.id,
+          start_time: new Date(),
+          end_time: null,
+          remarks: remarks.trim(),
+        });
+        
+        result.start_time = dayjs();
+        
+        if (result.id) {
+          // Update the task schedule with the new log entry
+          const updatedTaskSchedules = taskSchedules.map((schedule) => {
+            if (schedule.id === task.id) {
+              return { ...schedule, task_logs: [...schedule.task_logs, result] };
+            }
+            return schedule;
+          });
+          setTaskSchedules(updatedTaskSchedules);
+
+          // Add to task logs
+          setTaskLogs([...taskLogs, result]);
+          setSuccess("Task started successfully.");
+          onClose();
         }
         
         if ("error" in result) {
           setError(result.error);
-        } 
-      } catch {
+        }
+      } catch (error) {
+        console.error("Error starting task:", error);
         setError("An unexpected error occurred. Please try again.");
       }
     });
+  };
+
+  // New helper function to end a running task
+  const endRunningTask = async (taskObj, logData) => {
+    try {
+      // Update log entry
+      const result = await updateLogEntry(logData.id, {
+        start_time: logData.start_time,
+        end_time: new Date(),
+        remarks: logData.remarks || "Automatically ended when starting new task",
+      });
+      
+      if (result.id) {
+        // Update task schedules
+        const updatedTaskSchedules = taskSchedules.map((schedule) => {
+          if (schedule.id === taskObj.id) {
+            const updatedLogs = schedule.task_logs.map((log) => {
+              if (log.id === result.id) {
+                return { ...log, end_time: dayjs(), remarks: log.remarks || "Automatically ended when starting new task" };
+              }
+              return log;
+            });
+            return { ...schedule, task_logs: updatedLogs };
+          }
+          return schedule;
+        });
+        setTaskSchedules(updatedTaskSchedules);
+
+        // Update task logs
+        const updatedLogs = taskLogs.map((log) => {
+          if (log.id === result.id) {
+            return { ...log, end_time: dayjs(), remarks: log.remarks || "Automatically ended when starting new task" };
+          }
+          return log;
+        });
+        setTaskLogs(updatedLogs);
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error ending running task:", error);
+      return false;
+    }
+  };
+  
+  // Handle ending a task
+  const handleEndTask = () => {
+    resetStates();
+    
+    startTransition(async () => {
+      try {
+        const lastLogData = task.task_logs[task.task_logs.length - 1];
+        
+        // Validate task can be ended
+        if (lastLogData.end_time) {
+          setError("You have already ended this task.");
+          return;
+        }
+        
+        if (!lastLogData.start_time) {
+          setError("You have not started this task yet.");
+          return;
+        }
+        
+        if (lastLogData.start_time > new Date()) {
+          setError("You cannot end a task that has not started yet.");
+          return;
+        }
+        
+        // Update log entry
+        const result = await updateLogEntry(lastLogData.id, {
+          start_time: lastLogData.start_time,
+          end_time: new Date(),
+          remarks: remarks.trim(),
+        });
+        
+        if (result.id) {
+          // Update task schedules
+          const updatedTaskSchedules = taskSchedules.map((schedule) => {
+            if (schedule.id === task.id) {
+              const updatedLogs = schedule.task_logs.map((log) => {
+                if (log.id === result.id) {
+                  return { ...log, end_time: dayjs(), remarks: remarks.trim() };
+                }
+                return log;
+              });
+              return { ...schedule, task_logs: updatedLogs };
+            }
+            return schedule;
+          });
+          setTaskSchedules(updatedTaskSchedules);
+
+          // Update task logs
+          const updatedLogs = taskLogs.map((log) => {
+            if (log.id === result.id) {
+              return { ...log, end_time: dayjs(), remarks: remarks.trim() };
+            }
+            return log;
+          });
+          setTaskLogs(updatedLogs);
+          setSuccess("Task ended successfully."); // Fixed the success message
+          onClose();
+        }
+        
+        if ("error" in result) {
+          setError(result.error);
+        }
+      } catch (error) {
+        console.error("Error ending task:", error);
+        setError("An unexpected error occurred. Please try again.");
+      }
+    });
+  };
+  
+  // Handle save log (router function)
+  const handleSaveLog = (shouldStart) => {
+    if (shouldStart) {
+      handleStartTask();
+    } else {
+      handleEndTask();
+    }
   };
 
 
