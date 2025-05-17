@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "../ui/button";
 import Image from "next/image";
@@ -9,13 +9,16 @@ import { useDateStore, useToggleSideBarStore, useViewStore } from "./../../../li
 import dayjs from "dayjs";
 
 export default function HeaderLeft(tasksData) {
+  const [mounted, setMounted] = useState(false);
   const todaysDate = dayjs();
-  const { userSelectedDate, setDate, setMonth, selectedMonthIndex } =
-    useDateStore();
-
+  const { userSelectedDate, setDate, setMonth, selectedMonthIndex } = useDateStore();
   const { setSideBarOpen } = useToggleSideBarStore();
-
   const { selectedView } = useViewStore();
+
+  // Only render date content after component mounts on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleTodayClick = () => {
     switch (selectedView) {
@@ -103,20 +106,27 @@ export default function HeaderLeft(tasksData) {
         />
       </div> */}
 
-      {/* Current Date Display */}
-      <h1 className="hidden text-xl lg:block">
-        {selectedView === "month" && (
-          dayjs(new Date(dayjs().year(), selectedMonthIndex)).format("MMMM YYYY")
-        )}
-        {selectedView === "week" && (
-          <>
-            {userSelectedDate.startOf('week').format("MMM D")} - {userSelectedDate.endOf('week').format("MMM D, YYYY")}
-          </>
-        )}
-        {selectedView === "day" && (
-          userSelectedDate.format("dddd, MMMM D, YYYY")
-        )}
-      </h1>
+      {/* Current Date Display - Only render after client mount */}
+      {mounted ? (
+        <h1 className="hidden text-xl lg:block">
+          {selectedView === "month" && (
+            dayjs(new Date(dayjs().year(), selectedMonthIndex)).format("MMMM YYYY")
+          )}
+          {selectedView === "week" && (
+            <>
+              {userSelectedDate.startOf('week').format("MMM D")} - {userSelectedDate.endOf('week').format("MMM D, YYYY")}
+            </>
+          )}
+          {selectedView === "day" && (
+            userSelectedDate.format("dddd, MMMM D, YYYY")
+          )}
+        </h1>
+      ) : (
+        <h1 className="hidden text-xl lg:block">
+          {/* Empty placeholder with same height to prevent layout shift */}
+          <span className="opacity-0">Loading date...</span>
+        </h1>
+      )}
     </div>
   );
 }

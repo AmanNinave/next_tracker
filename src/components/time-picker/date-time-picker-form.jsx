@@ -26,6 +26,7 @@ import { TimePicker } from './time-picker'
 import { format } from 'date-fns'
 import { createNewScheduleEntry } from '@/app/api/tasks/route'
 import { updateTask } from '@/app/actions/task-actions'
+import { useEventStore } from '../../../lib/store'
   
 const formSchema = z.object({
   start_time: z.date(),
@@ -40,7 +41,8 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isRecurringEnabled, setIsRecurringEnabled] = useState(false);
-  
+  const {tasks, setTasks, taskSchedules, setTaskSchedules} = useEventStore();
+
   // RecurringForm state
   const [pattern, setPattern] = useState('daily');
   const [interval, setInterval] = useState(1);
@@ -110,20 +112,42 @@ const DateTimePickerForm = ({setIsScheduleEnabled, taskId, selectedTask}) => {
       
       let scheduleResponse = await createNewScheduleEntry({...values, task_id: taskId});
 
-      if(isRecurringEnabled && scheduleResponse?.id){
-        const recurrenceData = {
-          pattern,
-          interval: parseInt(interval),
-          selectedDays: pattern === 'weekly' ? selectedDays : [],
-          selectedMonthDays: pattern === 'monthly' ? selectedMonthDays : [],
-          selectedMonths: pattern === 'yearly' ? selectedMonths : [],
-        };
-        debugger;
-        // Send the recurrence data to the server
-        const response = await updateTask(selectedTask.id, {
-          ...selectedTask, 
-          settings: {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }  }
-        });
+      setTaskSchedules([...taskSchedules, scheduleResponse]);
+
+      if( scheduleResponse?.id ){
+        if(isRecurringEnabled){
+          const recurrenceData = {
+            pattern,
+            interval: parseInt(interval),
+            selectedDays: pattern === 'weekly' ? selectedDays : [],
+            selectedMonthDays: pattern === 'monthly' ? selectedMonthDays : [],
+            selectedMonths: pattern === 'yearly' ? selectedMonths : [],
+          };
+
+          // Send the recurrence data to the server
+          const response = await updateTask(selectedTask.id, {
+            ...selectedTask, 
+            settings: {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }  }
+          });
+          debugger;
+          let updatedTasks = tasks.map(task =>
+            task.id === selectedTask.id ? {
+              ...selectedTask, 
+              settings: {...selectedTask.settings, recurrence: {...selectedTask.settings.recurrence, [scheduleResponse.id]: recurrenceData }  },
+              task_schedules : [...selectedTask.task_schedules, scheduleResponse]
+            } : task
+          );
+          setTasks(updatedTasks);
+        }else{
+          debugger;
+          let updatedTasks = tasks.map(task =>
+            task.id === selectedTask.id ? {
+              ...selectedTask, 
+              task_schedules : [...selectedTask.task_schedules, scheduleResponse]
+            } : task
+          );
+          setTasks(updatedTasks);
+        }
       }
       setIsScheduleEnabled(false);
     } catch (err) {

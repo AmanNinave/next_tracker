@@ -41,7 +41,7 @@ const TaskList = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isPending, setIsPending] = useState(false);
-  const { tasks } = useEventStore();
+  const { tasks , setTasks} = useEventStore();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +77,10 @@ const TaskList = () => {
       
       // If successful, update the local task data
       setSelectedTask({...selectedTask, ...editForm});
+      let updatedTasks = tasks.map(task =>
+        task.id === selectedTask.id ? {...task, ...editForm} : task
+      );
+      setTasks(updatedTasks);
       
       // Exit editing mode
       setIsEditing(false);
@@ -174,7 +178,7 @@ const TaskList = () => {
       }
     });
   };
-  console.log(selectedTask)
+
   return (
     <div className="w-full">
       <div className="p-2 pt-0 border-b border-gray-100">
