@@ -46,7 +46,7 @@ export const getTaskSchedulesDataByDuration = async () => {
     const endDate = dayjs().add(1, "day").format("YYYY-MM-DD");
     const skip = 0;
     const limit = 100;
-    const data = await fetchTaskSchedulesDataByDuration(startDate);
+    const data = await fetchTaskSchedulesDataByDuration(startDate, endDate, skip, limit);
 
     return data.map((task) => ({
       ...task,

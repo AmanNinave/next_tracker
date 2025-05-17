@@ -72,7 +72,7 @@ export default function EventPopover({ isOpen, onClose, date }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all duration-200"
       onClick={handleClose}
     >
       <div

@@ -118,7 +118,7 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
   if (!isOpen) return null;
   const shouldShowStartButton = task.task_logs.length == 0 || task.task_logs[task.task_logs.length - 1]?.end_time;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all duration-200" onClick={onClose}>
       <div
         ref={popoverRef}
         className="w-full max-w-md rounded-lg bg-white shadow-lg"

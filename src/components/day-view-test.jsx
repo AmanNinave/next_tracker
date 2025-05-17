@@ -52,16 +52,16 @@ const DayView = () => {
       
       if (!isCorrectDate) return false;
       
-      const eventStartTime = dayjs(event.start_time);
-      const eventEndTime = dayjs(event.end_time || new Date());
+      // const eventStartTime = dayjs(event.start_time);
+      // const eventEndTime = dayjs(event.end_time);
       
-      if (type === "logs") {
-        return eventStartTime.isBefore(dayjs());
-      }
+      // if (type === "logs") {
+      //   return eventStartTime.isBefore(dayjs());
+      // }
       
-      if (type === "schedules") {
-        return eventEndTime.isAfter(dayjs());
-      }
+      // if (type === "schedules") {
+      //   return eventEndTime.isAfter(dayjs());
+      // }
       
       return true;
     });
@@ -135,7 +135,7 @@ const DayView = () => {
           }}
           onClick={(e) => {
             e.stopPropagation();
-            openEventSummary(event);
+            type === "schedules" && openEventSummary(event);
           }}
         >
           <strong className="block truncate">{event.task?.title || "Untitled Task"}</strong>
