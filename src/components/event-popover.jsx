@@ -11,6 +11,7 @@ import { createTask } from "@/app/actions/task-actions";
 import { cn } from "./../../lib/utils";
 import { Textarea } from "./ui/textarea";
 import { categories, subcategories, statuses, categories_and_subcategories } from "./../utils/constants";
+import { useEventStore } from "../../lib/store";
 
 export default function EventPopover({ isOpen, onClose, date }) {
   const popoverRef = useRef(null);
@@ -20,6 +21,7 @@ export default function EventPopover({ isOpen, onClose, date }) {
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [status, setStatus] = useState("pending");
+  const {tasks, setTasks} = useEventStore();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,11 +56,32 @@ export default function EventPopover({ isOpen, onClose, date }) {
     setSuccess(null);
     startTransition(async () => {
       try {
-        const result = await createTask(formData);
+        const title = formData.get("title");
+        const description = formData.get("description");
+    
+        const category = formData.get("category");
+        const sub_category = formData.get("subCategory");
+    
+        const status = formData.get("status");
+    
+        const payload = {
+          title,
+          description,
+          category,
+          sub_category,
+          status
+        }
+
+        const result = await createTask(payload);
+        debugger;
+        console.log(result);
         if ("error" in result) {
           setError(result.error);
-        } else if (result.success) {
-          setSuccess(result.success);
+        } else if (result.id) {
+
+          setTasks([...tasks, result]);
+
+          setSuccess("task created successfully");
           setTimeout(() => {
             onClose();
           }, 200);

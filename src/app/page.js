@@ -3,11 +3,10 @@ import { getTaskLogsDataByDuration, getTasks, getTaskSchedulesData, getTaskSched
 import Header from "@/components/header/Header";
 import MainView from "@/components/main-view";
 import { useState, useEffect } from "react";
+import { useEventStore } from "../../lib/store";
 
 export default function Home() {
-  const [tasks, setTasks] = useState([]);
-  const [taskSchedules, setTaskSchedules] = useState([]);
-  const [taskLogs, setTaskLogs] = useState([]);
+  const {tasks, setTasks, taskLogs, setTaskLogs, taskSchedules, setTaskSchedules} = useEventStore();
 
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -30,7 +29,7 @@ export default function Home() {
   return (
     <div className="h-screen w-screen overflow-hidden">
       <Header  />
-      <MainView tasksData={tasks} taskSchedulesData={taskSchedules} taskLogsData={taskLogs} />
+      <MainView  />
     </div>
   );
 }

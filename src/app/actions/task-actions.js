@@ -3,8 +3,8 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { redirect } from "next/navigation";
-
 import { createNewScheduleEntry, createNewTask, fetchTaskLogsDataByDuration, fetchTasks, fetchTaskSchedules, fetchTaskSchedulesDataByDuration, updateTaskApi } from '@/app/api/tasks/route';
+import { useEventStore } from "../../../lib/store";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -86,26 +86,9 @@ export const getTaskLogsDataByDuration = async () => {
   }
 }
 
-export const createTask = async (formData) => {
+export const createTask = async (payload) => {
   try {
-    const title = formData.get("title");
-    const description = formData.get("description");
-
-    const category = formData.get("category");
-    const sub_category = formData.get("subCategory");
-
-    const status = formData.get("status");
-
-    const payload = {
-      title,
-      description,
-      category,
-      sub_category,
-      status
-    }
-
     return createNewTask(payload)
-
   } catch (error) {
     console.error("Error creating task in the database:", error);
     if (error.status === 401 || error.redirect) {

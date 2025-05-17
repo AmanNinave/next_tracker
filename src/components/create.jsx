@@ -2,7 +2,6 @@
 
 import React, { useCallback, useState } from "react";
 import { useDateStore } from "../../lib/store";
-import { SvgIcons } from "./svg-icons";
 import EventPopover from "./event-popover";
 import { PlusCircle } from "lucide-react";
 

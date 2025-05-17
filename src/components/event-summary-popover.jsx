@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {  } from "@/app/actions/task-actions";
 import AddTime from "./add-time";
-import { FiClock } from "react-icons/fi";
+import { FiClock, FiMessageCircle } from "react-icons/fi";
 import { createNewLogEntry, updateLogEntry } from "@/app/api/tasks/route";
+import { useEventStore } from "../../lib/store";
 
 // Configure dayjs with timezone support
 dayjs.extend(utc);
@@ -37,11 +38,18 @@ function getStatusColor(status) {
 }
 
 export function EventSummaryPopover({ isOpen, onClose, task }) {
+  console.log("EventSummaryPopover", task);
   const popoverRef = useRef(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isPending, startTransition] = useTransition();
-  console.log("task", task);
+  const { taskLogs, setTaskLogs, taskSchedules, setTaskSchedules } = useEventStore();
+
+  let lastLogData = task.task_logs[task.task_logs.length - 1];
+  // Add states for remarks
+  const [showRemarksInput, setShowRemarksInput] = useState(false);
+  const [remarks, setRemarks] = useState(lastLogData && !lastLogData.end_time  ? lastLogData.remarks : "");
+  
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target)) {
@@ -75,8 +83,14 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
             task_id: task.task.id,
             start_time: new Date(),
             end_time: null,
-            remarks: '',
+            remarks: remarks.trim(),
           });
+          result.start_time = dayjs();
+          if (result.id) {
+            setTaskLogs([...taskLogs, result]);
+            setSuccess("Task started successfully.");
+            onClose();
+          }
         }else {
           let lastLogData = task.task_logs[task.task_logs.length - 1];
           if (lastLogData.end_time) {
@@ -98,16 +112,25 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
           result = await updateLogEntry(task.task_logs[task.task_logs.length - 1].id ,{
             start_time: lastLogData.start_time,
             end_time: new Date(),
-            remarks: lastLogData.remarks,
+            remarks: remarks.trim(),
           });
+          if (result.id) {
+            let updatedLogs = taskLogs.map((log) => {
+              if (log.id === result.id) {
+                return { ...log, end_time: dayjs() };
+              }
+              return log;
+            }
+            );
+            setTaskLogs(updatedLogs);
+            setSuccess("Task started successfully.");
+            onClose();
+          }
         }
         
         if ("error" in result) {
           setError(result.error);
-        } else if (result.success) {
-          setSuccess(result.success);
-          onClose();
-        }
+        } 
       } catch {
         setError("An unexpected error occurred. Please try again.");
       }
@@ -215,8 +238,31 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
           )}
         </div>
 
+        {/* Remarks input section */}
+        {showRemarksInput && (
+          <div className="mx-4 mb-2 animate-fadeIn">
+            <div className="flex items-center mb-1">
+              <FiMessageCircle className="text-gray-500 mr-2" />
+              <p className="text-sm font-medium text-gray-700">Add Remarks</p>
+            </div>
+            <Textarea
+              id="task-remarks"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder={`Add notes about ${shouldShowStartButton ? 'starting' : 'completing'} this task...`}
+              className="w-full resize-none border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              rows={3}
+            />
+          </div>
+        )}
+
         <div className="flex justify-center gap-1 p-3 bg-gray-50 rounded-b-lg">
-          <Button onClick={() => handleSaveLog(shouldShowStartButton)}>{shouldShowStartButton ? "Start" : "End"}</Button>
+          <Button onClick={() => { !showRemarksInput ? setShowRemarksInput(true) : handleSaveLog(shouldShowStartButton)}}
+            className="w-full bg-blue-500 text-white hover:bg-blue-600"
+            disabled={isPending}
+          >
+            {showRemarksInput ? "Confirm": shouldShowStartButton ? "Start Task" : "End Task"}
+          </Button>
         </div>
       </div>
     </div>

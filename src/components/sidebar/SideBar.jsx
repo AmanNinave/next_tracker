@@ -3,12 +3,12 @@ import React from "react";
 import SideBarCalendar from "./side-bar-calendar";
 import SearchUsers from "./search-users";
 import MyCalendars from "./my-calendars";
-import { useToggleSideBarStore } from "./../../../lib/store";
+import { useEventStore, useToggleSideBarStore } from "./../../../lib/store";
 import TaskList from "./task-list";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function SideBar({tasksData}) {
+export default function SideBar() {
   const { isSideBarOpen } = useToggleSideBarStore();
   const router = useRouter();
   
@@ -31,7 +31,7 @@ export default function SideBar({tasksData}) {
       {/* <SideBarCalendar /> */}
       {/* <SearchUsers />
       <MyCalendars /> */}
-      <TaskList tasks={tasksData} />
+      <TaskList />
       
       {/* Logout button with absolute positioning */}
       <div className="absolute bottom-4 left-0 right-0 px-4">

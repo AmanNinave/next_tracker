@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { createNewLogEntry, updateLogEntry } from "@/app/api/tasks/route";
+import { useEventStore } from "../../../lib/store";
 
 
 
@@ -32,7 +33,7 @@ function getStatusColor(status) {
   }
 }
 
-const TaskList = ({ tasks }) => {
+const TaskList = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(statuses[1]);
@@ -40,6 +41,7 @@ const TaskList = ({ tasks }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isPending, setIsPending] = useState(false);
+  const { tasks } = useEventStore();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

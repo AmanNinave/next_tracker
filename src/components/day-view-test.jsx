@@ -5,7 +5,7 @@ import { useDateStore, useEventStore } from '../../lib/store';
 
 const DayView = () => {
   const [currentTime, setCurrentTime] = useState(dayjs());
-  const { openPopover, taskSchedules, taskLogs, openEventSummary, viewMode } = useEventStore();
+  const { openPopover, taskSchedules, taskLogs, openEventSummary, viewMode, setTaskLogs } = useEventStore();
   const { userSelectedDate, setDate } = useDateStore();
 
   // Update current time every minute
@@ -32,7 +32,7 @@ const DayView = () => {
         key={`hour-${hour}`}
         className="relative border-b border-gray-200"
         style={{ height: '60px' }}
-        onClick={handleTimeSlotClick}
+        // onClick={handleTimeSlotClick}
       >
         <span className="absolute left-2 top-2 text-sm text-gray-500">
           {dayjs().hour(hour).minute(0).format('h A')}
@@ -44,6 +44,7 @@ const DayView = () => {
   // Filter and render events (logs or schedules)
   const renderEvents = useCallback((type, data) => {
     // First filter events for current date and correct time (past for logs, future for schedules)
+    if (!data || data.length === 0) return null;
     const filteredEvents = data.filter(event => {
       if (!event.start_time) return false;
       
@@ -135,7 +136,17 @@ const DayView = () => {
           }}
           onClick={(e) => {
             e.stopPropagation();
-            type === "schedules" && openEventSummary(event);
+            if(type === "schedules") {
+              openEventSummary(event)
+            }else {
+              let filteredEvent;
+              taskSchedules.forEach((schedule) => {
+                if (schedule.id === event.task_schedule_id) {
+                  filteredEvent = schedule;
+                }
+              });
+              filteredEvent && openEventSummary(filteredEvent);
+            }
           }}
         >
           <strong className="block truncate">{event.task?.title || "Untitled Task"}</strong>
@@ -145,7 +156,7 @@ const DayView = () => {
         </div>
       );
     });
-  }, [userSelectedDate, openEventSummary, viewMode]);
+  }, [userSelectedDate, openEventSummary, viewMode, taskSchedules, taskLogs]);
 
   // Current time indicator
   const renderCurrentTime = useCallback(() => {
@@ -169,6 +180,39 @@ const DayView = () => {
     );
   }, [currentTime]);
 
+  // Only update current time when tab is visible
+  useEffect(() => {
+    let interval;
+    
+    // Function to start the interval
+    const startInterval = () => {
+      interval = setInterval(() => { setCurrentTime(dayjs())}, 5000);
+    };
+    
+    // Start the interval initially
+    startInterval();
+    
+    // Handle visibility change to save resources when tab is hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearInterval(interval);
+      } else {
+        // Update immediately when tab becomes visible again
+        setCurrentTime(dayjs());
+        startInterval();
+      }
+    };
+    
+    // Add event listener for visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+  console.log("rendered");
   return (
     <div className="relative w-full h-[calc(100vh-58px)] border border-gray-300 overflow-y-auto">
       {renderHours()}
