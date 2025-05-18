@@ -77,32 +77,48 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
     startTransition(async () => {
       try {
         // Check if any task is already running
-        const runningTaskLog = taskLogs.find(log => log.end_time === null);
+        const runningTaskLog = taskLogs.find(log => {
+          // Check for null or undefined
+          if (log.end_time === null || log.end_time === undefined) return true;
+          
+          // Check for invalid date string or object
+          if (log.end_time === "" || log.end_time === "Invalid Date") return true;
+          
+          // Use dayjs to validate dates
+          const date = dayjs(log.end_time);
+          return !date.isValid();
+        });
         
         if (runningTaskLog) {
-          // Option 1: Show a confirmation dialog
-          if (confirm("You have a running task. Do you want to end it before starting this one?")) {
-            // End the running task first
-            const taskSchedule = taskSchedules.find(schedule => 
-              schedule.task_logs.some(log => log.id === runningTaskLog.id)
-            );
+          // // Below code is commented out because it is taking starttime and end time from last log which is mismatching with schedule time
+          // // Show a confirmation dialog
+          // if (confirm("You have a running task. Do you want to end it before starting this one?")) {
+          //   // End the running task first
+          //   const taskSchedule = taskSchedules.find(schedule => 
+          //     schedule.task_logs.some(log => log.id === runningTaskLog.id)
+          //   );
             
-            if (taskSchedule) {
-              // Create a temporary task object with the running log for endTask
-              const runningTask = {
-                id: taskSchedule.id,
-                task: { id: taskSchedule.task.id },
-                task_logs: taskSchedule.task_logs.filter(log => log.id === runningTaskLog.id)
-              };
+          //   if (taskSchedule) {
+          //     // Create a temporary task object with the running log for endTask
+          //     const runningTask = {
+          //       id: taskSchedule.id,
+          //       task: { id: taskSchedule.task.id },
+          //       task_logs: taskSchedule.task_logs.filter(log => log.id === runningTaskLog.id)
+          //     };
               
-              // Call endTask for the running task
-              await endRunningTask(runningTask, runningTaskLog);
-            }
-          } else {
+          //     // Call endTask for the running task
+          //     // await endRunningTask(runningTask);
+          //     // await handleEndTask(runningTask);
+          //   } else {
+          //     // User chose not to end running task
+          //     setError("Please end the running task first.");
+          //     return;
+          //   }
+          // } else {
             // User chose not to end running task
             setError("Please end the running task first.");
             return;
-          }
+          // }
         }
         
         // Create new log entry for current task
@@ -187,12 +203,12 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
   };
   
   // Handle ending a task
-  const handleEndTask = () => {
+  const handleEndTask = async (taskSchedule) => {
     resetStates();
     
     startTransition(async () => {
       try {
-        const lastLogData = task.task_logs[task.task_logs.length - 1];
+        const lastLogData = taskSchedule.task_logs[taskSchedule.task_logs.length - 1];
         
         // Validate task can be ended
         if (lastLogData.end_time) {
@@ -212,15 +228,15 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
         
         // Update log entry
         const result = await updateLogEntry(lastLogData.id, {
-          start_time: lastLogData.start_time,
-          end_time: new Date(),
+          start_time: lastLogData.start_time,                     // This is in utc
+          end_time: new Date(),                                   // This is in utc
           remarks: remarks.trim(),
         });
         
         if (result.id) {
           // Update task schedules
           const updatedTaskSchedules = taskSchedules.map((schedule) => {
-            if (schedule.id === task.id) {
+            if (schedule.id === taskSchedule.id) {
               const updatedLogs = schedule.task_logs.map((log) => {
                 if (log.id === result.id) {
                   return { ...log, end_time: dayjs(), remarks: remarks.trim() };
@@ -260,7 +276,7 @@ export function EventSummaryPopover({ isOpen, onClose, task }) {
     if (shouldStart) {
       handleStartTask();
     } else {
-      handleEndTask();
+      handleEndTask(task);
     }
   };
 
