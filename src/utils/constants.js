@@ -47,6 +47,7 @@ export const categories_and_subcategories = {
         "Miscellaneous",
     ],
     Personal: [
+        "Functions",
         "Family Time",
         "Self-Care",
         "Hobbies",
