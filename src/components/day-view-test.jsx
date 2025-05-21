@@ -269,8 +269,8 @@ const DayView = () => {
       
       {/* Only render event types that are enabled in viewMode */}
       {(viewMode === 'schedules' || viewMode === 'both') && renderEvents("schedules", taskSchedules)}
-      {(viewMode === 'logs' || viewMode === 'both') && renderEvents("events", events)}
       {(viewMode === 'logs' || viewMode === 'both') && renderEvents("logs", taskLogs)}
+      {(viewMode === 'logs' || viewMode === 'both') && renderEvents("events", events)}
 
       
       {/* Only show current time indicator if viewing today */}
