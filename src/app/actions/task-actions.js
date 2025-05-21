@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { redirect } from "next/navigation";
-import { createNewScheduleEntry, createNewTask, fetchEventsDataByDuration, fetchTaskLogsDataByDuration, fetchTasks, fetchTaskSchedules, fetchTaskSchedulesDataByDuration, updateTaskApi } from '@/app/api/tasks/route';
+import { createNewEvent, createNewScheduleEntry, createNewTask, fetchEventsDataByDuration, fetchTaskLogsDataByDuration, fetchTasks, fetchTaskSchedules, fetchTaskSchedulesDataByDuration, updateTaskApi } from '@/app/api/tasks/route';
 import { useEventStore } from "../../../lib/store";
 
 dayjs.extend(utc);
@@ -115,6 +115,18 @@ export const getEventDataByDuration = async (startDate = null, endDate = null, s
 export const createTask = async (payload) => {
   try {
     return createNewTask(payload)
+  } catch (error) {
+    console.error("Error creating task in the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
+    return [];
+  }
+}
+
+export const createEvent = async (payload) => {
+  try {
+    return createNewEvent(payload)
   } catch (error) {
     console.error("Error creating task in the database:", error);
     if (error.status === 401 || error.redirect) {

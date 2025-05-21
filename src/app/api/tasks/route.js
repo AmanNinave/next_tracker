@@ -134,6 +134,10 @@ export const createNewTask = async (payload) => {
   return apiCall(`${API_URL}/task`, "POST", payload);
 };
 
+export const createNewEvent = async (payload) => {
+  return apiCall(`${API_URL}/event`, "POST", payload);
+}
+
 export const createNewScheduleEntry = async (payload) => {
   return apiCall(`${API_URL}/task-schedule`, "POST", payload);
 };

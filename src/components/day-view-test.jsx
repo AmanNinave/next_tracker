@@ -66,7 +66,7 @@ const DayView = () => {
       
       return true;
     });
-    console.log("Filtered Events: ",type, filteredEvents);
+
     // Then render the filtered events
     return filteredEvents.map((event, index) => {
       const start = dayjs(event.start_time);
@@ -199,7 +199,7 @@ const DayView = () => {
             }
           }}
         >
-          <strong className="block truncate">{event.task?.title || "Untitled Task"}</strong>
+          <strong className="block truncate">{event.task?.title || event.title || "Untitled Task"}</strong>
           <span className={`${style.text} text-xs`}>
             {start.format('h:mm A')} - {end.format('h:mm A')}
           </span>

@@ -7,7 +7,7 @@ import {
   HiOutlineMenuAlt4,
 } from "react-icons/hi";
 import { IoCloseSharp } from "react-icons/io5";
-import { createTask } from "@/app/actions/task-actions";
+import { createEvent, createTask } from "@/app/actions/task-actions";
 import { cn } from "./../../lib/utils";
 import { Textarea } from "./ui/textarea";
 import { categories, subcategories, statuses, categories_and_subcategories } from "./../utils/constants";
@@ -21,7 +21,8 @@ export default function EventPopover({ isOpen, onClose, date }) {
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [status, setStatus] = useState("pending");
-  const {tasks, setTasks} = useEventStore();
+  const {tasks, setTasks, events, setEvents} = useEventStore();
+  const [formType, setFormType] = useState('event'); // 'task' or 'event'
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -62,19 +63,41 @@ export default function EventPopover({ isOpen, onClose, date }) {
         const category = formData.get("category");
         const sub_category = formData.get("subCategory");
     
-        const status = formData.get("status");
-    
-        const payload = {
-          title,
-          description,
-          category,
-          sub_category,
-          status
+        
+        let result;
+        
+        if (formType === 'task') {
+          const status = formData.get("status");
+          // Create task
+          result = await createTask({
+            title,
+            description,
+            category,
+            sub_category,
+            status
+          });
+          
+          if (result.id) {
+            setTasks([...tasks, result]);
+            setSuccess("Task created successfully");
+          }
+        } else {
+          // Create event
+          result = await createEvent({
+            title,
+            description,
+            category,
+            sub_category,
+            start_time: dayjs(),
+          });
+          
+          if (result.id) {
+            // Update events store
+            result.start_time = dayjs.utc(result.start_time).tz("Asia/Kolkata").format()
+            setEvents([...events, result]);
+            setSuccess("Event created successfully");
+          }
         }
-
-        const result = await createTask(payload);
-        debugger;
-        console.log(result);
         if ("error" in result) {
           setError(result.error);
         } else if (result.id) {
@@ -92,10 +115,9 @@ export default function EventPopover({ isOpen, onClose, date }) {
     });
   }
 
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all duration-200"
+      className="fixed inset-0 z-500 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all duration-200"
       onClick={handleClose}
     >
       <div
@@ -105,6 +127,30 @@ export default function EventPopover({ isOpen, onClose, date }) {
       >
         <div className="mb-2 flex items-center justify-between rounded-md bg-slate-100 p-1">
           <HiOutlineMenuAlt4 />
+            <div className="flex items-center bg-white rounded-md p-1 shadow-sm border border-gray-200">
+              <button
+                type="button"
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  formType === 'task' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-transparent text-gray-500 hover:bg-gray-100'
+                }`}
+                onClick={() => setFormType('task')}
+              >
+                Task
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  formType === 'event' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-transparent text-gray-500 hover:bg-gray-100'
+                }`}
+                onClick={() => setFormType('event')}
+              >
+                Event
+              </button>
+            </div>
           <Button
             variant="ghost"
             size="icon"
@@ -170,26 +216,28 @@ export default function EventPopover({ isOpen, onClose, date }) {
               )}
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              name="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 h-7"
-            >
-              {statuses.map((s) => (
-                <option key={s} value={s.toLowerCase()}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          
+          {formType !== 'event' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                name="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 h-7"
+              >
+                {statuses.map((s) => (
+                  <option key={s} value={s.toLowerCase()}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2">
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? "Saving..." : formType !== 'event' ? "Save" : "Start"}
             </Button>
           </div>
 
