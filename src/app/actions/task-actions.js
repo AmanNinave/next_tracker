@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { redirect } from "next/navigation";
-import { createNewScheduleEntry, createNewTask, fetchTaskLogsDataByDuration, fetchTasks, fetchTaskSchedules, fetchTaskSchedulesDataByDuration, updateTaskApi } from '@/app/api/tasks/route';
+import { createNewScheduleEntry, createNewTask, fetchEventsDataByDuration, fetchTaskLogsDataByDuration, fetchTasks, fetchTaskSchedules, fetchTaskSchedulesDataByDuration, updateTaskApi } from '@/app/api/tasks/route';
 import { useEventStore } from "../../../lib/store";
 
 dayjs.extend(utc);
@@ -83,6 +83,32 @@ export const getTaskLogsDataByDuration = async () => {
       redirect("/login");
     }
     return
+  }
+}
+
+export const getEventDataByDuration = async (startDate = null, endDate = null, skip = 0, limit = 100) => {
+    try {
+    const startDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const endDate = dayjs().add(1, "day").format("YYYY-MM-DD");
+    const skip = 0;
+    const limit = 100;
+    
+    
+    const data = await fetchEventsDataByDuration(startDate, endDate, skip, limit);
+
+    // Transform dates to IST timezone and format consistently
+    return data.map((event) => ({
+      ...event,
+      date: dayjs.utc(event.start_time).tz("Asia/Kolkata").format(),
+      start_time: dayjs.utc(event.start_time).tz("Asia/Kolkata").format(),
+      end_time: dayjs.utc(event.end_time).tz("Asia/Kolkata").format(),
+    }));
+  } catch (error) {
+    console.error("Error fetching events from the database:", error);
+    if (error.status === 401 || error.redirect) {
+      redirect("/login");
+    }
+    return [];
   }
 }
 

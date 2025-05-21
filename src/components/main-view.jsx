@@ -25,14 +25,6 @@ export default function MainView() {
     isEventSummaryOpen,
     closeEventSummary,
     selectedEvent,
-
-    tasks,
-    taskLogs,
-    taskSchedules,
-
-    setTasks,
-    setTaskLogs,
-    setTaskSchedules,
   } = useEventStore();
 
   const { userSelectedDate } = useDateStore();

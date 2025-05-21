@@ -5,7 +5,7 @@ import { useDateStore, useEventStore } from '../../lib/store';
 
 const DayView = () => {
   const [currentTime, setCurrentTime] = useState(dayjs());
-  const { openPopover, taskSchedules, taskLogs, openEventSummary, viewMode, setTaskLogs } = useEventStore();
+  const { openPopover,events, taskSchedules, taskLogs, openEventSummary, viewMode, setTaskLogs } = useEventStore();
   const { userSelectedDate, setDate } = useDateStore();
 
   // Update current time every minute
@@ -84,20 +84,68 @@ const DayView = () => {
 
       // Calculate event styling based on type and status
       const styles = {
-        logs: {
-          bg: "bg-red-500",
-          border: "border-red-300",
-          text: "text-gray-100"
+        // Regular events (purple palette)
+        events: {
+          bg: "bg-amber-400",
+          border: "border-amber-300",
+          text: "text-amber-900",
+          hover: "group-hover:bg-amber-500"
         },
+        
+        // Task logs (orange/amber palette)
+        logs: {
+          bg: "bg-amber-500",
+          border: "border-amber-400",
+          text: "text-white",
+          hover: "group-hover:bg-amber-600"
+        },
+        
+        // Scheduled tasks (blue palette)
         schedules: {
           bg: "bg-blue-500", 
-          border: "border-blue-300",
-          text: "text-gray-200"
+          border: "border-blue-400",
+          text: "text-white",
+          hover: "group-hover:bg-blue-600"
         },
+        
+        // In-progress tasks (green palette)
         inProgress: {
-          bg: "bg-green-500",
-          border: "border-green-300",
-          text: "text-gray-100"
+          bg: "bg-emerald-500",
+          border: "border-emerald-400",
+          text: "text-white",
+          hover: "group-hover:bg-emerald-600"
+        },
+        
+        // Important events (red palette)
+        important: {
+          bg: "bg-rose-500",
+          border: "border-rose-400", 
+          text: "text-white",
+          hover: "group-hover:bg-rose-600"
+        },
+        
+        // Personal events (indigo palette)
+        personal: {
+          bg: "bg-indigo-500",
+          border: "border-indigo-400",
+          text: "text-white",
+          hover: "group-hover:bg-indigo-600"
+        },
+        
+        // Meetings (teal palette)
+        meetings: {
+          bg: "bg-teal-500",
+          border: "border-teal-400",
+          text: "text-white",
+          hover: "group-hover:bg-teal-600"
+        },
+        
+        // Breaks/Time off (gray palette)
+        breaks: {
+          bg: "bg-slate-400",
+          border: "border-slate-300",
+          text: "text-slate-900",
+          hover: "group-hover:bg-slate-500"
         }
       };
       
@@ -110,7 +158,7 @@ const DayView = () => {
       
       if (viewMode === "both") {
         // Side by side view
-        if (type === "logs") {
+        if (type === "logs" || type === "events") {
           width = "calc(50% - 60px)"; // Half width
           left = `${baseLeft}px`;
         } else {
@@ -136,7 +184,9 @@ const DayView = () => {
           }}
           onClick={(e) => {
             e.stopPropagation();
-            if(type === "schedules") {
+            if(type === "events"){
+              openEventSummary({...event, status: isInProgress ? "in-progress" : "completed"});
+            }else if(type === "schedules" ) {
               openEventSummary(event)
             }else {
               let filteredEvent;
@@ -219,7 +269,9 @@ const DayView = () => {
       
       {/* Only render event types that are enabled in viewMode */}
       {(viewMode === 'schedules' || viewMode === 'both') && renderEvents("schedules", taskSchedules)}
+      {(viewMode === 'logs' || viewMode === 'both') && renderEvents("events", events)}
       {(viewMode === 'logs' || viewMode === 'both') && renderEvents("logs", taskLogs)}
+
       
       {/* Only show current time indicator if viewing today */}
       {isToday && renderCurrentTime()}

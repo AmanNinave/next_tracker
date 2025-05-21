@@ -92,8 +92,32 @@ export const fetchTaskSchedulesDataByDuration = async (startDate, endDate = null
 };
 
 export const fetchTaskLogsDataByDuration = async (startDate, endDate = null, skip = 0, limit = 100) => {
-  // Create base URL with required startDate parameter
+  
   let url = `${API_URL}/task-log/duration/?start_date=${encodeURIComponent(startDate)}`;
+  
+  // Add optional endDate if provided
+  if (endDate) {
+    url += `&end_date=${encodeURIComponent(endDate)}`;
+  }
+  
+  // Add pagination parameters
+  url += `&skip=${skip}&limit=${limit}`;
+  
+  return apiCall(url);
+};
+
+
+/**
+ * Fetches events from the API based on date range and pagination
+ * @param {string} startDate - Start date in YYYY-MM-DD format
+ * @param {string} endDate - End date in YYYY-MM-DD format
+ * @param {number} skip - Number of events to skip (for pagination)
+ * @param {number} limit - Maximum number of events to fetch
+ * @returns {Promise<Array>} - Promise resolving to array of events
+ */
+export const fetchEventsDataByDuration = async (startDate, endDate, skip = 0, limit = 100) => {
+    
+  let url = `${API_URL}/event/duration/?start_date=${encodeURIComponent(startDate)}`;
   
   // Add optional endDate if provided
   if (endDate) {
@@ -125,3 +149,7 @@ export const updateLogEntry = async (id, payload) => {
 export const updateTaskApi = async (task_id, payload) => {
   return apiCall(`${API_URL}/task/${task_id}`, "PUT", payload);
 };
+
+export const endEvent = async (event_id, payload) => {
+  return apiCall(`${API_URL}/event/${event_id}`, "PUT", payload);
+}
