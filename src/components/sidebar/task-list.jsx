@@ -282,7 +282,7 @@ const [remarks, setRemarks] = useState("");
             
             return filteredTasks.length > 0 ? (
               filteredTasks.map((task) => {
-                const canLog = task.task_schedules?.length > 0 // && dayjs(task.task_schedules?.[0]?.end_time).isAfter(dayjs());  // to expire the task after end time
+                const canLog = (task.status == statuses[5] || task.status == statuses[1]) && task.task_schedules?.length > 0; // && dayjs(task.task_schedules?.[0]?.end_time).isAfter(dayjs());  // to expire the task after end time
                 const remainingSchedules = task.task_schedules?.slice(1);
                 const currentSchedule = findCurrentSchedule(remainingSchedules) || task.task_schedules?.[0];
                 const scheduleId = currentSchedule?.id;
