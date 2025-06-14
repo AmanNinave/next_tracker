@@ -190,6 +190,111 @@ const TaskList = () => {
     });
   };
 
+  const updateAllRelatedData = async (taskId, scheduleId, newLogData, wasStartAction) => {
+    try {
+      // Get store methods
+      const { 
+        fetchTasks, 
+        refreshTaskLogs, 
+        refreshTaskSchedules, 
+        refreshEvents,
+        taskSchedules,
+        setTaskSchedules 
+      } = useEventStore.getState();
+      
+      // Update tasks data locally first for immediate UI feedback
+      updateTasksDataLocally(taskId, scheduleId, newLogData, wasStartAction);
+      
+      // Update task schedules data locally
+      updateSchedulesDataLocally(scheduleId, newLogData, wasStartAction);
+      
+      // Then refresh all data from server to ensure consistency
+      await Promise.all([
+        fetchTasks?.(),
+        refreshTaskLogs?.(),
+        refreshTaskSchedules?.(),
+        refreshEvents?.()
+      ]);
+      
+      console.log("All data updated successfully");
+    } catch (error) {
+      console.error("Error updating related data:", error);
+      setError("Task updated but display refresh failed. Please reload the page.");
+    }
+  };
+
+  // Update schedules data locally in the store
+  const updateSchedulesDataLocally = (scheduleId, newLogData, wasStartAction) => {
+    const { taskSchedules, setTaskSchedules } = useEventStore.getState();
+    
+    const updatedSchedules = taskSchedules.map(schedule => {
+      if (schedule.id === scheduleId) {
+        let updatedLogs;
+        
+        if (wasStartAction) {
+          // Add new log entry
+          updatedLogs = [...(schedule.task_logs || []), newLogData];
+        } else {
+          // Update existing log entry
+          updatedLogs = schedule.task_logs?.map(log => 
+            log.id === newLogData.id ? { ...log, ...newLogData } : log
+          ) || [];
+        }
+        
+        return {
+          ...schedule,
+          task_logs: updatedLogs
+        };
+      }
+      return schedule;
+    });
+    
+    setTaskSchedules(updatedSchedules);
+  };
+  
+  // Update tasks data locally
+  const updateTasksDataLocally = (taskId, scheduleId, newLogData, wasStartAction) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        const updatedSchedules = task.task_schedules?.map(schedule => {
+          if (schedule.id === scheduleId) {
+            let updatedLogs;
+            
+            if (wasStartAction) {
+              // Add new log entry
+              updatedLogs = [...(schedule.task_logs || []), newLogData];
+            } else {
+              // Update existing log entry
+              updatedLogs = schedule.task_logs?.map(log => 
+                log.id === newLogData.id ? { ...log, ...newLogData } : log
+              ) || [];
+            }
+            
+            return {
+              ...schedule,
+              task_logs: updatedLogs
+            };
+          }
+          return schedule;
+        }) || [];
+        
+        return {
+          ...task,
+          task_schedules: updatedSchedules
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    
+    // Update selectedTask if it's the same task
+    if (selectedTask && selectedTask.id === taskId) {
+      const updatedSelectedTask = updatedTasks.find(task => task.id === taskId);
+      setSelectedTask(updatedSelectedTask);
+    }
+  };
+
   // Function to handle remarks submission
   const handleRemarksSubmit = (shouldStart, scheduleId, taskId, lastLog) => {
     handleSaveLog(shouldStart, scheduleId, taskId, lastLog, remarks);
