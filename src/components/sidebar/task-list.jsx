@@ -59,9 +59,9 @@ const TaskList = () => {
     status: ""
   });
 
-// state for remarks input
-const [showRemarksInput, setShowRemarksInput] = useState(null); // Store task ID when showing remarks
-const [remarks, setRemarks] = useState("");
+  // state for remarks input
+  const [showRemarksInput, setShowRemarksInput] = useState(null); // Store task ID when showing remarks
+  const [remarks, setRemarks] = useState("");
 
   // Initialize form data when task is selected
   useEffect(() => {
@@ -298,36 +298,72 @@ const [remarks, setRemarks] = useState("");
                 <div
                   key={task.id}
                   onClick={() => handleTaskClick(task)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:shadow-md hover:border-gray-300 bg-white"
+                  className={`cursor-pointer rounded-xl border p-4 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 ${
+                    canLog && !shouldShowStartButton 
+                      ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg ring-2 ring-green-200 ring-opacity-50' 
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                  }`}
                 >
                   {/* Task content - keep all your existing task card content here */}
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium text-gray-900 w-50 overflow-ellipsis">{task.title}</h3>
-                    <div className="flex justify-items-start w-40 items-center text-xs text-gray-500 space-x-2 overflow-ellipsis">
-                      <span>{task.category}</span>
-                      {task.sub_category && (
-                        <>
-                          <span>•</span>
-                          <span>{task.sub_category}</span>
-                        </>
-                      )}
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900 text-sm mb-2">{task.title}</h3>
+                      
+                      {/* Enhanced category/subcategory section */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          {task.category}
+                        </span>
+                        {task.sub_category && (
+                          <div className="flex items-center gap-1">
+                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                              {task.sub_category}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2 w-12">
+                    
+                    <div className="flex items-center space-x-2 ml-4">
                       {canLog && (
                         <div className="flex flex-col space-y-2">
-                          {/* Main action buttons */}
-                          <div className="flex items-center space-x-2 ">
-                            { showRemarksInput !== task.id && (
+                          <div className="flex items-center space-x-2">
+                            {showRemarksInput !== task.id && (
                               <Button
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleRemarksInput(task.id, shouldShowStartButton ? "" : lastLog?.remarks || "");
                                 }}
-                                className={`text-xs h-7 px-3 flex items-center ${showRemarksInput === task.id ? "" : ""}`}
+                                className={`text-xs h-7 px-3 flex items-center transition-all duration-200 ${
+                                  !shouldShowStartButton 
+                                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-md' 
+                                    : 'bg-green-500 hover:bg-green-600 text-white shadow-md'
+                                }`}
                                 disabled={isPending}
                               >
-                                {showRemarksInput === task.id && isPending ? "Processing..." : shouldShowStartButton ? "Start" : "End"}
+                                {showRemarksInput === task.id && isPending ? (
+                                  <>
+                                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    {shouldShowStartButton ? (
+                                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                      </svg>
+                                    ) : (
+                                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                    {shouldShowStartButton ? "Start" : "End"}
+                                  </>
+                                )}
                               </Button>
                             )}
                           </div>
@@ -335,60 +371,146 @@ const [remarks, setRemarks] = useState("");
                       )}
                     </div>
                   </div>
-                  {/* Remarks input section */}
-                  {showRemarksInput === task.id && (
-                    <div className="mt-2 p-2 bg-gray-50 rounded-md" onClick={(e) => e.stopPropagation()}>
-                      <textarea
-                        value={remarks}
-                        onChange={(e) => setRemarks(e.target.value)}
-                        placeholder={`Add remarks for ${shouldShowStartButton ? 'starting' : 'ending'} this task...`}
-                        className="w-full text-xs p-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        rows={2}
-                        autoFocus
-                      />
-                      <div className="flex justify-end space-x-1 mt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleRemarksInput(task.id);
-                          }}
-                          className="text-xs h-6 px-2"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemarksSubmit(shouldShowStartButton, scheduleId, task.id, lastLog);
-                          }}
-                          className="text-xs h-6 px-2"
-                          disabled={isPending}
-                        >
-                          {isPending ? "Processing..." : shouldShowStartButton ? "Start Task" : "End Task"}
-                        </Button>
+
+                  {/* Enhanced running time section */}
+                  {canLog && !shouldShowStartButton && lastLog && (
+                    <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800">Task in Progress</p>
+                            <p className="text-xs text-green-600">
+                              Started at {formatDateTime(lastLog.start_time).split(',')[1]?.trim()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-green-700">
+                            {Math.floor((Date.now() - new Date(toIndianTime(lastLog.start_time))) / 60000)}
+                            <span className="text-sm font-normal ml-1">min</span>
+                          </p>
+                          <p className="text-xs text-green-600">Duration</p>
+                        </div>
                       </div>
                     </div>
                   )}
-                  
-                  {/* {task.task_schedules?.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-center justify-around">
-                      <div className="flex items-center">
-                        <Clock className="h-3.5 w-3.5 mr-1" />
-                        <span>
-                          Start: {formatDateTime(task.task_schedules[0].start_time)}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-3.5 w-3.5 mr-1" />
-                        <span>
-                          End: {formatDateTime(task.task_schedules[0].end_time)}
-                        </span>
+                  {/* Remarks input section */}
+                  {showRemarksInput === task.id && (
+                    <div 
+                      className="mt-3 overflow-hidden animate-in slide-in-from-top-3 duration-500 ease-out"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="backdrop-blur-sm bg-white/70 border border-white/20 rounded-xl p-4 shadow-lg ring-1 ring-black/5">
+                        {/* Animated header */}
+                        <div className="flex items-center gap-3 mb-4 animate-in fade-in duration-700">
+                          <div className="relative">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </div>
+                            {/* Pulse animation ring */}
+                            <div className="absolute inset-0 w-8 h-8 bg-blue-400 rounded-full animate-ping opacity-20"></div>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-800">
+                              {shouldShowStartButton ? '🚀 Starting Task' : '🏁 Completing Task'}
+                            </h4>
+                            <p className="text-xs text-gray-500">Add your thoughts or notes</p>
+                          </div>
+                        </div>
+
+                        {/* Enhanced textarea with floating label effect */}
+                        <div className="relative mb-4">
+                          <textarea
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
+                            placeholder=" "
+                            className="peer w-full text-sm p-2 border-2 border-gray-200 rounded-xl resize-none focus:outline-none focus:border-blue-500 transition-all duration-300 bg-white/50 backdrop-blur-sm placeholder-transparent"
+                            rows={3}
+                            autoFocus
+                            maxLength={500}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') {
+                                toggleRemarksInput(task.id);
+                              } else if (e.key === 'Enter' && e.ctrlKey) {
+                                handleRemarksSubmit(shouldShowStartButton, scheduleId, task.id, lastLog);
+                              }
+                            }}
+                          />
+                          {/* Floating label */}
+                          {/* <label className="absolute left-4 top-4 text-sm text-gray-500 transition-all duration-300 peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-1 peer-focus:text-xs peer-focus:text-blue-600 peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-blue-600 bg-white/80 px-1 rounded">
+                            {`Remarks for ${shouldShowStartButton ? 'starting' : 'ending'} this task...`}
+                          </label> */}
+                          
+                          {/* Character counter with progress bar */}
+                          <div className="absolute bottom-2 right-3 flex items-center gap-2">
+                            <div className="w-12 h-1 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all duration-300 ${
+                                  remarks.length > 400 ? 'bg-red-400' : remarks.length > 250 ? 'bg-yellow-400' : 'bg-green-400'
+                                }`}
+                                style={{ width: `${(remarks.length / 500) * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className={`text-xs ${remarks.length > 450 ? 'text-red-500' : 'text-gray-400'}`}>
+                              {remarks.length}/500
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action buttons with micro-interactions */}
+                        <div className="flex justify-between items-center">
+                          <div className="text-xs text-gray-500 w-50">
+                            Press Esc to cancel or Enter to submit
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRemarksInput(task.id);
+                              }}
+                              className="text-xs h-8 px-3 hover:bg-gray-50 hover:scale-105 transition-all duration-200 border-gray-300"
+                              disabled={isPending}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemarksSubmit(shouldShowStartButton, scheduleId, task.id, lastLog);
+                              }}
+                              className={`text-xs h-8 px-4 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 ${
+                                shouldShowStartButton 
+                                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white' 
+                                  : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
+                              }`}
+                              disabled={isPending}
+                            >
+                              {isPending ? (
+                                <div className="flex items-center">
+                                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                  Processing...
+                                </div>
+                              ) : (
+                                <div className="flex items-center">
+                                  {shouldShowStartButton ? "🚀 Start" : "🏁 Complete"}
+                                </div>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )} */}
+                  )}
                 </div>
               )})
             ) : (
