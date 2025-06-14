@@ -36,7 +36,7 @@ function getStatusColor(status) {
 const TaskList = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(statuses[1]);
+  const [currentStatus, setCurrentStatus] = useState(statuses[5]); // Default to "recurring"
   const [currentCategory, setCurrentCategory] = useState("all");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -52,6 +52,10 @@ const TaskList = () => {
     sub_category: "",
     status: ""
   });
+
+// state for remarks input
+const [showRemarksInput, setShowRemarksInput] = useState(null); // Store task ID when showing remarks
+const [remarks, setRemarks] = useState("");
 
   // Initialize form data when task is selected
   useEffect(() => {
@@ -126,7 +130,7 @@ const TaskList = () => {
   };
 
   // log related functions
-  const handleSaveLog = (shouldStart , task_schedule_id, task_id, logDetails) => {
+  const handleSaveLog = (shouldStart , task_schedule_id, task_id, logDetails, remarksText = "") => {
     setError(null);
     setSuccess(null);
     setIsPending(true);
@@ -139,7 +143,7 @@ const TaskList = () => {
             task_id: task_id,
             start_time: new Date(),
             end_time: null,
-            remarks: '',
+            remarks: remarksText.trim(),
           });
         }else {
           let lastLogData = logDetails;
@@ -162,11 +166,12 @@ const TaskList = () => {
           result = await updateLogEntry(lastLogData.id ,{
             start_time: lastLogData.start_time,
             end_time: new Date(),
-            remarks: lastLogData.remarks,
+            remarks: remarksText.trim() || lastLogData.remarks,
           });
         }
         
         setIsPending(false);
+        toggleRemarksInput(); // Hide remarks input after submission
         if ("error" in result) {
           setError(result.error);
         } else if (result.success) {
@@ -177,6 +182,22 @@ const TaskList = () => {
         setError("An unexpected error occurred. Please try again.");
       }
     });
+  };
+
+  // Function to handle remarks submission
+  const handleRemarksSubmit = (shouldStart, scheduleId, taskId, lastLog) => {
+    handleSaveLog(shouldStart, scheduleId, taskId, lastLog, remarks);
+  };
+
+  // Function to toggle remarks input
+  const toggleRemarksInput = (taskId) => {
+    if (showRemarksInput === taskId) {
+      setShowRemarksInput(null);
+      setRemarks("");
+    } else {
+      setShowRemarksInput(taskId);
+      setRemarks("");
+    }
   };
 
   return (
@@ -237,37 +258,83 @@ const TaskList = () => {
                   className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:shadow-md hover:border-gray-300 bg-white"
                 >
                   {/* Task content - keep all your existing task card content here */}
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-900">{task.title}</h3>
-                    <div className="flex items-center space-x-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium text-gray-900 w-50 overflow-ellipsis">{task.title}</h3>
+                    <div className="flex justify-items-start w-40 items-center text-xs text-gray-500 space-x-2 overflow-ellipsis">
+                      <span>{task.category}</span>
+                      {task.sub_category && (
+                        <>
+                          <span>•</span>
+                          <span>{task.sub_category}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 w-12">
                       {canLog && (
+                        <div className="flex flex-col space-y-2">
+                          {/* Main action buttons */}
+                          <div className="flex items-center space-x-2 ">
+                            { showRemarksInput !== task.id && (
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (showRemarksInput === task.id) {
+                                    handleRemarksSubmit(shouldShowStartButton, scheduleId, task.id, lastLog);
+                                  } else {
+                                    toggleRemarksInput(task.id);
+                                  }
+                                }}
+                                className={`text-xs h-7 px-3 flex items-center ${showRemarksInput === task.id ? "" : ""}`}
+                                disabled={isPending}
+                              >
+                                {isPending ? "Processing..." : shouldShowStartButton ? "Start" : "End"}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Remarks input section */}
+                  {showRemarksInput === task.id && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded-md" onClick={(e) => e.stopPropagation()}>
+                      <textarea
+                        value={remarks}
+                        onChange={(e) => setRemarks(e.target.value)}
+                        placeholder={`Add remarks for ${shouldShowStartButton ? 'starting' : 'ending'} this task...`}
+                        className="w-full text-xs p-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex justify-end space-x-1 mt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRemarksInput(task.id);
+                          }}
+                          className="text-xs h-6 px-2"
+                        >
+                          Cancel
+                        </Button>
                         <Button
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleSaveLog(shouldShowStartButton, scheduleId, task.id, lastLog);
+                            handleRemarksSubmit(shouldShowStartButton, scheduleId, task.id, lastLog);
                           }}
-                          className="text-xs h-7 px-3 flex items-center"
+                          className="text-xs h-6 px-2"
                           disabled={isPending}
                         >
-                          {shouldShowStartButton ? "Start" : "End"}
+                          {isPending ? "Processing..." : shouldShowStartButton ? "Start Task" : "End Task"}
                         </Button>
-                      )}
-                      <Badge className={`text-xs px-2 py-1 rounded-full ${getStatusColor(task.status)}`}>
-                        {task.status || currentStatus}
-                      </Badge>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500 space-x-2">
-                    <span>{task.category}</span>
-                    {task.sub_category && (
-                      <>
-                        <span>•</span>
-                        <span>{task.sub_category}</span>
-                      </>
-                    )}
-                  </div>
-                  {task.task_schedules?.length > 0 && (
+                  )}
+                  
+                  {/* {task.task_schedules?.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 flex items-center justify-around">
                       <div className="flex items-center">
                         <Clock className="h-3.5 w-3.5 mr-1" />
@@ -282,7 +349,7 @@ const TaskList = () => {
                         </span>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               )})
             ) : (
