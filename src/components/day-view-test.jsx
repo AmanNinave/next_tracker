@@ -76,7 +76,7 @@ const DayView = () => {
       
       // Handle invalid or missing end times
       if (!event.end_time || end.toString() === "Invalid Date") {
-        end = dayjs();
+        end = dayjs(currentTime);
         isInProgress = true;
       }
       
@@ -267,29 +267,160 @@ const DayView = () => {
         </div>
       );
     });
-  }, [userSelectedDate, openEventSummary, viewMode, taskSchedules, taskLogs]);
+  }, [currentTime, userSelectedDate, openEventSummary, viewMode, taskSchedules, taskLogs]);
 
-  // Current time indicator
+  // Update the renderCurrentTime function with fixed pointer events:
   const renderCurrentTime = useCallback(() => {
     const formattedTime = currentTime.format('h:mm A');
     const currentMinutes = currentTime.hour() * 60 + currentTime.minute();
     
+    // Find currently running events
+    const liveEvents = [
+      ...taskLogs.filter(log => !log.end_time || log.end_time === "Invalid Date").map(log => ({...log, type: 'logs'})),
+      ...events.filter(event => !event.end_time || event.end_time === "Invalid Date").map(event => ({...event, type: 'events'})),
+      ...taskSchedules.filter(schedule => {
+        const start = dayjs(schedule.start_time);
+        const end = dayjs(schedule.end_time);
+        const now = dayjs();
+        return start.isBefore(now) && end.isAfter(now);
+      }).map(schedule => ({...schedule, type: 'schedules'}))
+    ];
+
     return (
-      <div
-        className="absolute border-t-2 border-red-500 z-50 pointer-events-none"
-        style={{
-          top: `${currentMinutes}px`,
-          left: '50px',
-          width: 'calc(100% - 50px)',
-          transition: 'top 0.3s ease'
-        }}
-      >
-        <span className="absolute right-2 text-red-500 text-xs font-medium">
-          {formattedTime}
-        </span>
-      </div>
+      <>
+        {/* Current time line with enhanced styling */}
+        <div
+          className="absolute z-50"
+          style={{
+            top: `${currentMinutes}px`,
+            left: '50px',
+            width: 'calc(100% - 50px)',
+            transition: 'top 0.3s ease',
+            pointerEvents: 'none' // Keep this for the line itself
+          }}
+        >
+          {/* Glowing time line */}
+          <div className="relative">
+            <div className="absolute inset-0 border-t-2 border-red-500 opacity-50 blur-sm"></div>
+            <div className="border-t-2 border-red-500"></div>
+          </div>
+
+          {/* Time and live events indicator */}
+          <div 
+            className="absolute right-2 -top-4 flex items-center gap-2"
+            style={{ pointerEvents: 'auto' }} // Enable pointer events for this section
+          >
+            {/* Live events counter with animation */}
+            {liveEvents.length > 0 && (
+              <div className="relative group">
+                <div className="flex items-center gap-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg cursor-pointer hover:from-red-600 hover:to-red-700 transition-all duration-200">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  <span>{liveEvents.length} Live</span>
+                  <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                {/* Live events dropdown */}
+                <div 
+                  className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-3 min-w-[280px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[70]"
+                  style={{ pointerEvents: 'auto' }} // Ensure dropdown is interactive
+                >
+                  <h4 className="text-sm font-semibold text-red-600 mb-3 flex items-center">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                    Currently Running ({liveEvents.length})
+                  </h4>
+                  
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {liveEvents.map((event, index) => {
+                      const startTime = dayjs(event.start_time);
+                      const duration = dayjs().diff(startTime, 'minute');
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className="p-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                          onClick={() => openEventSummary(event)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900 truncate text-sm">
+                                {event.task?.title || event.title || "Untitled Task"}
+                              </div>
+                              
+                              {/* Show remarks if available */}
+                              {event.remarks && (
+                                <div className="text-xs text-gray-500 mt-1 italic truncate">
+                                  "{event.remarks}"
+                                </div>
+                              )}
+                              
+                              {/* Event type badge */}
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  event.type === 'schedules' ? 'bg-blue-100 text-blue-700' :
+                                  event.type === 'logs' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-purple-100 text-purple-700'
+                                }`}>
+                                  {event.type === 'schedules' ? 'Scheduled' :
+                                  event.type === 'logs' ? 'Activity' : 'Event'}
+                                </span>
+                              </div>
+                              
+                              {/* Duration and start time */}
+                              <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                                <div className="flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                  </svg>
+                                  Started: {startTime.format('h:mm A')}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                  </svg>
+                                  Duration: {duration >= 60 ? `${Math.floor(duration / 60)}h ${duration % 60}m` : `${duration}m`}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Live indicator */}
+                            <div className="flex items-center gap-1 ml-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Action buttons */}
+                  <div className="mt-3 pt-2 border-t border-gray-200 flex justify-end">
+                    <button 
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      onClick={() => console.log('View all active tasks')}
+                    >
+                      View All Active Tasks →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Current time display */}
+            <div className="bg-white border border-red-200 text-red-600 text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
+              <div className="flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                {formattedTime}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
     );
-  }, [currentTime]);
+  }, [currentTime, taskLogs, events, taskSchedules, openEventSummary]);
 
   // Only update current time when tab is visible
   useEffect(() => {
