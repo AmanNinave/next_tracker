@@ -200,6 +200,41 @@ const [remarks, setRemarks] = useState("");
     }
   };
 
+  const findCurrentSchedule = (schedules) => {
+    const now = dayjs();
+    return schedules?.find(schedule => {
+      const startTime = dayjs(schedule.start_time);
+      const endTime = dayjs(schedule.end_time);
+
+      // Check if schedule is currently active
+      const isTimeActive = now.isAfter(startTime) && now.isBefore(endTime) || 
+                          now.isSame(startTime) || 
+                          now.isSame(endTime) || 
+                          (schedule.end_time === null && now.isAfter(startTime));
+      
+      // Also check if there's a running log (end_time is null)
+      const hasRunningLog = schedule.task_logs?.some(log => log.end_time === null);
+      
+      return isTimeActive || hasRunningLog;
+    });
+  };
+
+  const getButtonText = () => {
+    if (!canLog) {
+      switch (scheduleStatus.status) {
+        case 'no_schedule':
+          return 'No Schedule';
+        case 'upcoming':
+          return `Starts ${dayjs(scheduleStatus.schedule.start_time).format('HH:mm')}`;
+        case 'no_active':
+          return 'Not Active';
+        default:
+          return 'Unavailable';
+      }
+    }
+    return shouldShowStartButton ? "Start" : "End";
+  };
+
   return (
     <div className="w-full">
       <div className="p-2 pt-0 border-b border-gray-100">
@@ -247,9 +282,11 @@ const [remarks, setRemarks] = useState("");
             
             return filteredTasks.length > 0 ? (
               filteredTasks.map((task) => {
-                const canLog = task.status == statuses[5] && task.task_schedules?.length > 0 && dayjs(task.task_schedules?.[0]?.end_time).isAfter(dayjs());
-                const scheduleId = task.task_schedules?.[0]?.id;
-                const lastLog = task.task_schedules?.[0]?.task_logs?.[task.task_schedules?.[0]?.task_logs.length - 1] ;
+                const canLog = task.task_schedules?.length > 0 // && dayjs(task.task_schedules?.[0]?.end_time).isAfter(dayjs());  // to expire the task after end time
+                const remainingSchedules = task.task_schedules?.slice(1);
+                const currentSchedule = findCurrentSchedule(remainingSchedules) || task.task_schedules?.[0];
+                const scheduleId = currentSchedule?.id;
+                const lastLog = currentSchedule?.task_logs?.[currentSchedule.task_logs.length - 1];
                 const shouldShowStartButton = !lastLog || lastLog.end_time;
                 return (
                 <div

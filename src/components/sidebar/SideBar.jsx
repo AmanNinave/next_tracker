@@ -23,8 +23,8 @@ export default function SideBar() {
   return (
     <aside
       className={cn(
-        "w-120 hidden border-t px-2 py-3 transition-all duration-300 ease-in-out lg:block relative",
-        !isSideBarOpen && "lg:hidden"
+        "w-120 border-t px-2 py-3 transition-all duration-300 ease-in-out relative",
+        !isSideBarOpen && "hidden"
       )}
     >
       

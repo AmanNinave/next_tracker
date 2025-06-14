@@ -72,7 +72,7 @@ export default function HeaderLeft(tasksData) {
   return (
     <div className="flex items-center gap-3">
       {/* Sidebar Toggle and Calendar Icon */}
-      <div className="hidden items-center lg:flex">
+      <div className="items-center flex">
         <Button
           variant="ghost"
           className="rounded-full p-2"
