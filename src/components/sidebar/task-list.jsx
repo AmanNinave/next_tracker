@@ -20,6 +20,12 @@ import { useEventStore } from "../../../lib/store";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+// Helper function to convert UTC to IST
+const toIndianTime = (date) => {
+  if (!date) return null;
+  return dayjs.utc(date).tz("Asia/Kolkata");
+};
+
 function getStatusColor(status) {
   switch (status?.toLowerCase()) {
     case "pending":
@@ -190,27 +196,27 @@ const [remarks, setRemarks] = useState("");
   };
 
   // Function to toggle remarks input
-  const toggleRemarksInput = (taskId) => {
+  const toggleRemarksInput = (taskId, logRemarks) => {
     if (showRemarksInput === taskId) {
       setShowRemarksInput(null);
       setRemarks("");
     } else {
       setShowRemarksInput(taskId);
-      setRemarks("");
+      setRemarks(logRemarks);
     }
   };
 
   const findCurrentSchedule = (schedules) => {
     const now = dayjs();
+
     return schedules?.find(schedule => {
-      const startTime = dayjs(schedule.start_time);
-      const endTime = dayjs(schedule.end_time);
+      const startTime = toIndianTime(schedule.start_time);
+      const endTime = toIndianTime(schedule.end_time);
 
       // Check if schedule is currently active
-      const isTimeActive = now.isAfter(startTime) && now.isBefore(endTime) || 
-                          now.isSame(startTime) || 
-                          now.isSame(endTime) || 
-                          (schedule.end_time === null && now.isAfter(startTime));
+      const isTimeActive = now.isAfter(startTime) && now.isBefore(endTime) ||  // In between start and end
+                          now.isSame(startTime) || now.isSame(endTime) ||      // Exactly at start or end time
+                          (endTime === null && now.isAfter(startTime));        // If end_time is null, check if current time is after start_time
       
       // Also check if there's a running log (end_time is null)
       const hasRunningLog = schedule.task_logs?.some(log => log.end_time === null);
@@ -316,16 +322,12 @@ const [remarks, setRemarks] = useState("");
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (showRemarksInput === task.id) {
-                                    handleRemarksSubmit(shouldShowStartButton, scheduleId, task.id, lastLog);
-                                  } else {
-                                    toggleRemarksInput(task.id);
-                                  }
+                                  toggleRemarksInput(task.id, shouldShowStartButton ? "" : lastLog?.remarks || "");
                                 }}
                                 className={`text-xs h-7 px-3 flex items-center ${showRemarksInput === task.id ? "" : ""}`}
                                 disabled={isPending}
                               >
-                                {isPending ? "Processing..." : shouldShowStartButton ? "Start" : "End"}
+                                {showRemarksInput === task.id && isPending ? "Processing..." : shouldShowStartButton ? "Start" : "End"}
                               </Button>
                             )}
                           </div>
