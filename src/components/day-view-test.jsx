@@ -45,31 +45,29 @@ const DayView = () => {
   const renderEvents = useCallback((type, data) => {
     // First filter events for current date and correct time (past for logs, future for schedules)
     if (!data || data.length === 0) return null;
+
     const filteredEvents = data.filter(event => {
       if (!event.start_time) return false;
+      debugger;
+      const eventStartDate = dayjs(event.start_time).format('DD-MM-YY');
+      const eventEndDate = event.end_time ? dayjs(event.end_time).format('DD-MM-YY') : null;
       
-      const eventDate = dayjs(event.start_time).format('DD-MM-YY');
-      const isCorrectDate = eventDate === userSelectedDate.format('DD-MM-YY');
-      
-      if (!isCorrectDate) return false;
-      
-      // const eventStartTime = dayjs(event.start_time);
-      // const eventEndTime = dayjs(event.end_time);
-      
-      // if (type === "logs") {
-      //   return eventStartTime.isBefore(dayjs());
-      // }
-      
-      // if (type === "schedules") {
-      //   return eventEndTime.isAfter(dayjs());
-      // }
-      
-      return true;
+      // Check if event is for the selected date
+      const isCorrectDate = eventStartDate === userSelectedDate.format('DD-MM-YY') || !eventEndDate || event.end_time === "Invalid Date" ||
+                        eventEndDate === userSelectedDate.format('DD-MM-YY');
+
+      return isCorrectDate;
     });
 
     // Then render the filtered events
     return filteredEvents.map((event, index) => {
-      const start = dayjs(event.start_time);
+      const originalStart = dayjs(event.start_time);
+      
+      // Check if event is from previous day, if so set to today at 12:00 AM
+      const start = originalStart.isBefore(dayjs().startOf('day')) 
+        ? dayjs().startOf('day')  // Today at 00:00
+        : originalStart;
+
       let end = dayjs(event.end_time);
       let isInProgress = false;
       
@@ -174,7 +172,9 @@ const DayView = () => {
       return (
         <div
           key={`${type}-${index}`}
-          className={`absolute ${style.bg} text-white rounded-md p-2 pt-0 text-sm shadow-md border ${style.border} overflow-hidden group transition-opacity hover:opacity-90`}
+          className={`absolute ${style.bg} text-white rounded-md p-2 pt-0 text-sm shadow-md border ${style.border} overflow-hidden group transition-opacity hover:opacity-90 ${
+            originalStart.isBefore(dayjs().startOf('day')) ? 'ring-2 ring-orange-400 ring-opacity-50' : ''
+          }`}
           style={{
             top: `${top}px`,
             height: `${duration}px`,
@@ -199,10 +199,49 @@ const DayView = () => {
             }
           }}
         >
-          <strong className="block truncate">{event.task?.title || event.title || "Untitled Task"}</strong>
-          <span className={`${style.text} text-xs`}>
-            {start.format('h:mm A')} - {end.format('h:mm A')}
-          </span>
+          {/* Previous day indicator */}
+          {originalStart.isBefore(dayjs().startOf('day')) && (
+            <div className="absolute top-0 left-0 right-0 bg-orange-500 text-white text-xs px-1 py-0.5 flex items-center justify-center">
+              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">Started Yesterday</span>
+            </div>
+          )}
+          
+          <div className={`${originalStart.isBefore(dayjs().startOf('day')) ? 'mt-6' : 'mt-1'}`}>
+            <strong className="block truncate">{event.task?.title || event.title || "Untitled Task"}</strong>
+            
+            {/* Remarks display */}
+            {event.remarks && (
+              <div className="mt-1 text-xs opacity-80 line-clamp-2">
+                <svg className="w-3 h-3 mr-1 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>
+                <span className="italic">{event.remarks}</span>
+              </div>
+            )}
+            {/* Time and duration display */}
+            <div className="flex flex-col gap-1 mt-1">
+              <span className={`${style.text} text-xs flex items-center`}>
+                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                {originalStart.format('h:mm A')} - {end.format('h:mm A')}
+              </span>
+              
+              {/* Duration display */}
+              <span className={`${style.text} text-xs flex items-center opacity-90`}>
+                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>
+                {Math.floor(duration / 60)}h {duration % 60}m
+                {isInProgress && (
+                  <span className="ml-1 animate-pulse">• Running</span>
+                )}
+              </span>
+            </div>
+          </div>
         </div>
       );
     });

@@ -305,7 +305,7 @@ const TaskList = () => {
                   }`}
                 >
                   {/* Task content - keep all your existing task card content here */}
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-900 text-sm mb-2">{task.title}</h3>
                       
