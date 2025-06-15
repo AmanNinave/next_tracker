@@ -63,6 +63,31 @@ const TaskList = () => {
   const [showRemarksInput, setShowRemarksInput] = useState(null); // Store task ID when showing remarks
   const [remarks, setRemarks] = useState("");
 
+  const [expandedSchedules, setExpandedSchedules] = useState(new Set());
+  const [expandedLogs, setExpandedLogs] = useState(new Set());
+
+  // Function to toggle individual schedule
+  const toggleSchedule = (scheduleId) => {
+    const newExpanded = new Set(expandedSchedules);
+    if (newExpanded.has(scheduleId)) {
+      newExpanded.delete(scheduleId);
+    } else {
+      newExpanded.add(scheduleId);
+    }
+    setExpandedSchedules(newExpanded);
+  };
+
+  // Function to toggle logs within a schedule
+  const toggleLogs = (scheduleId) => {
+    const newExpandedLogs = new Set(expandedLogs);
+    if (newExpandedLogs.has(scheduleId)) {
+      newExpandedLogs.delete(scheduleId);
+    } else {
+      newExpandedLogs.add(scheduleId);
+    }
+    setExpandedLogs(newExpandedLogs);
+  };
+
   // Initialize form data when task is selected
   useEffect(() => {
     if (selectedTask) {
@@ -760,67 +785,270 @@ const TaskList = () => {
                 />
               )}
 
-              { !isEditing && !isScheduleEnabled && selectedTask.task_schedules?.length > 0 && (
+              {!isEditing && !isScheduleEnabled && selectedTask.task_schedules?.length > 0 && (
                 <div className="border-t pt-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <Calendar className="h-4 w-4 mr-1 text-gray-500" />
-                    Scheduled Times (Indian Timezone)
-                  </h4>
-                  <div className="space-y-3">
+                  {/* Main toggle header for all schedules */}
+                  <div 
+                    className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md cursor-pointer transition-colors duration-200 mb-3"
+                    onClick={() => {
+                      if (expandedSchedules.size === selectedTask.task_schedules.length) {
+                        setExpandedSchedules(new Set());
+                      } else {
+                        setExpandedSchedules(new Set(selectedTask.task_schedules.map(s => s.id)));
+                      }
+                    }}
+                  >
+                    <h4 className="text-sm font-medium text-gray-700 flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                      Scheduled Times & Activity Logs
+                      <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {selectedTask.task_schedules.length} schedule{selectedTask.task_schedules.length !== 1 ? 's' : ''}
+                      </span>
+                    </h4>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">
+                        {expandedSchedules.size === selectedTask.task_schedules.length ? 'Collapse All' : 'Expand All'}
+                      </span>
+                      <svg 
+                        className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                          expandedSchedules.size > 0 ? 'rotate-180' : ''
+                        }`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Individual schedules */}
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
                     {selectedTask.task_schedules.map((schedule) => (
-                      <div key={schedule.id} className="bg-gray-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center mb-2">
-                          <h5 className="text-sm font-medium text-gray-700">Schedule #{schedule.id}</h5>
-                          <span className="text-xs text-gray-500">
-                            {calculateDuration(schedule.start_time, schedule.end_time) > 0
-                              ? `${calculateDuration(schedule.start_time, schedule.end_time)} min`
-                              : "Invalid duration"}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                          <div className="flex items-center">
-                            <Clock className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-                            <div>
-                              <p className="text-gray-500">Start</p>
-                              <p>{formatDateTime(schedule.start_time)}</p>
+                      <div key={schedule.id} className="bg-gray-50 rounded-md border border-gray-100">
+                        {/* Schedule Header - Always Visible */}
+                        <div 
+                          className="p-3 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                          onClick={() => toggleSchedule(schedule.id)}
+                        >
+                          <div className="flex justify-between items-center">
+                            <h5 className="text-sm font-medium text-gray-700 flex items-center">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                              Schedule #{schedule.id}
+                              {schedule.task_logs?.some(log => !log.end_time) && (
+                                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium animate-pulse">
+                                  LIVE
+                                </span>
+                              )}
+                            </h5>
+                            
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full border">
+                                {calculateDuration(schedule.start_time, schedule.end_time) > 0
+                                  ? `${calculateDuration(schedule.start_time, schedule.end_time)} min`
+                                  : "Invalid duration"}
+                              </span>
+                              <svg 
+                                className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                                  expandedSchedules.has(schedule.id) ? 'rotate-180' : ''
+                                }`} 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
                             </div>
                           </div>
-                          <div className="flex items-center">
-                            <Clock className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-                            <div>
-                              <p className="text-gray-500">End</p>
-                              <p>{formatDateTime(schedule.end_time)}</p>
+                          
+                          {/* Quick preview when collapsed */}
+                          {!expandedSchedules.has(schedule.id) && (
+                            <div className="mt-2 flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                </svg>
+                                {formatDateTime(schedule.start_time).split(',')[0]}
+                              </span>
+                              <span className="flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                </svg>
+                                {formatDateTime(schedule.start_time).split(',')[1]?.trim()} - {formatDateTime(schedule.end_time).split(',')[1]?.trim()}
+                              </span>
+                              {schedule.task_logs?.length > 0 && (
+                                <span className="flex items-center">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                  {schedule.task_logs.length} log{schedule.task_logs.length !== 1 ? 's' : ''}
+                                </span>
+                              )}
                             </div>
-                          </div>
+                          )}
                         </div>
                         
-                        {schedule.task_logs?.length > 0 && (
-                          <div className="mt-3 pt-2 border-t border-gray-200">
-                            <p className="text-xs font-medium text-gray-600 mb-1">Activity Logs</p>
-                            <div className="space-y-1.5">
-                              {schedule.task_logs.map((log) => (
-                                <div key={log.id} className="bg-white p-2 rounded border border-gray-200 text-xs">
-                                  <div className="flex justify-between items-center">
-                                    <span className="font-medium">Log #{log.id}</span>
-                                    <span className="text-gray-500">
-                                      {log.end_time && calculateDuration(log.start_time, log.end_time) > 0
-                                        ? `${calculateDuration(log.start_time, log.end_time)} min`
-                                        : "In progress"}
+                        {/* Collapsible Schedule Content */}
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                          expandedSchedules.has(schedule.id) ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                        }`}>
+                          <div className="px-3 pb-3">
+                            {/* Time details */}
+                            <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 mb-3">
+                              <div className="flex items-center p-2 bg-white rounded border border-gray-100">
+                                <Clock className="h-3.5 w-3.5 mr-2 text-green-500" />
+                                <div>
+                                  <p className="text-gray-500 font-medium">Start</p>
+                                  <p className="text-gray-700">{formatDateTime(schedule.start_time)}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center p-2 bg-white rounded border border-gray-100">
+                                <Clock className="h-3.5 w-3.5 mr-2 text-red-500" />
+                                <div>
+                                  <p className="text-gray-500 font-medium">End</p>
+                                  <p className="text-gray-700">{formatDateTime(schedule.end_time)}</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Activity Logs Section with Toggle */}
+                            {schedule.task_logs?.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                {/* Logs Toggle Header */}
+                                <div 
+                                  className="flex items-center justify-between p-2 hover:bg-white rounded-md cursor-pointer transition-colors duration-200 mb-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLogs(schedule.id);
+                                  }}
+                                >
+                                  <div className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <p className="text-xs font-medium text-gray-600">Activity Logs</p>
+                                    <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                                      {schedule.task_logs.length} log{schedule.task_logs.length !== 1 ? 's' : ''}
                                     </span>
-                                  </div>
-                                  <div className="flex justify-between mt-1 text-gray-600">
-                                    <span>{formatDateTime(log.start_time)}</span>
-                                    {log.end_time ? (
-                                      <span>{formatDateTime(log.end_time)}</span>
-                                    ) : (
-                                      <span className="italic text-amber-600">Running</span>
+                                    {schedule.task_logs.some(log => !log.end_time) && (
+                                      <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                                        ACTIVE
+                                      </span>
                                     )}
                                   </div>
+                                  
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-gray-500">
+                                      {expandedLogs.has(schedule.id) ? 'Hide' : 'Show'}
+                                    </span>
+                                    <svg 
+                                      className={`h-3 w-3 text-gray-500 transition-transform duration-200 ${
+                                        expandedLogs.has(schedule.id) ? 'rotate-180' : ''
+                                      }`} 
+                                      fill="none" 
+                                      stroke="currentColor" 
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
+                                
+                                {/* Quick logs summary when collapsed */}
+                                {!expandedLogs.has(schedule.id) && (
+                                  <div className="bg-white p-2 rounded border border-gray-100 text-xs text-gray-600">
+                                    <div className="flex justify-between items-center">
+                                      <span>
+                                        {schedule.task_logs.filter(log => log.end_time).length} completed, 
+                                        {' '}{schedule.task_logs.filter(log => !log.end_time).length} running
+                                      </span>
+                                      <span className="text-gray-500">
+                                        Total: {schedule.task_logs.reduce((acc, log) => 
+                                          acc + (log.end_time ? calculateDuration(log.start_time, log.end_time) : 0), 0
+                                        )} min
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Collapsible Logs Content */}
+                                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                                  expandedLogs.has(schedule.id) ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+                                }`}>
+                                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                                    {schedule.task_logs.map((log) => (
+                                      <div key={log.id} className="bg-white p-3 rounded-md border border-gray-200 shadow-sm">
+                                        <div className="flex justify-between items-start mb-2">
+                                          <div className="flex items-center">
+                                            <span className="text-xs font-medium text-gray-700 flex items-center">
+                                              <div className={`w-2 h-2 rounded-full mr-2 ${
+                                                log.end_time ? 'bg-green-500' : 'bg-orange-500 animate-pulse'
+                                              }`}></div>
+                                              Log #{log.id}
+                                            </span>
+                                            {!log.end_time && (
+                                              <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                                                RUNNING
+                                              </span>
+                                            )}
+                                          </div>
+                                          <span className="text-xs text-gray-500 font-medium">
+                                            {log.end_time && calculateDuration(log.start_time, log.end_time) > 0
+                                              ? `${calculateDuration(log.start_time, log.end_time)} min`
+                                              : "In progress"}
+                                          </span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div className="flex items-center p-1.5 bg-green-50 rounded border border-green-200">
+                                            <svg className="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                            <div>
+                                              <p className="text-green-600 font-medium">Started</p>
+                                              <p className="text-gray-700">{formatDateTime(log.start_time)}</p>
+                                            </div>
+                                          </div>
+                                          
+                                          <div className={`flex items-center p-1.5 rounded border ${
+                                            log.end_time 
+                                              ? 'bg-red-50 border-red-200' 
+                                              : 'bg-orange-50 border-orange-200'
+                                          }`}>
+                                            <svg className={`w-3 h-3 mr-1 ${
+                                              log.end_time ? 'text-red-600' : 'text-orange-600'
+                                            }`} fill="currentColor" viewBox="0 0 20 20">
+                                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                            </svg>
+                                            <div>
+                                              <p className={`font-medium ${
+                                                log.end_time ? 'text-red-600' : 'text-orange-600'
+                                              }`}>
+                                                {log.end_time ? 'Ended' : 'Running'}
+                                              </p>
+                                              <p className="text-gray-700">
+                                                {log.end_time ? formatDateTime(log.end_time) : 'In progress...'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Remarks section */}
+                                        {log.remarks && (
+                                          <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-100">
+                                            <p className="text-xs text-gray-500 font-medium mb-1">Remarks:</p>
+                                            <p className="text-xs text-gray-700 italic">"{log.remarks}"</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     ))}
                   </div>
