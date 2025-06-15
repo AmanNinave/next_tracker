@@ -848,7 +848,7 @@ const TaskList = () => {
                       size="sm" 
                       onClick={() => {setIsEditing(false); setIsScheduleEnabled(true)}} 
                       className="text-xs h-8 px-3 flex items-center"
-                      disabled={selectedTask.status == statuses[5] && selectedTask.task_schedules?.length > 0}
+                      // disabled={selectedTask.status == statuses[5] && selectedTask.task_schedules?.length > 0}
                     >
                       <Calendar className="h-4 w-4 mr-1.5" />
                       Schedule Task
